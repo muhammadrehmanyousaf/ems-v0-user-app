@@ -1,8 +1,10 @@
-/** EmptyState — bridal empty/placeholder with optional CTA. */
+/** EmptyState — bridal empty/placeholder with optional CTA, framed by the
+ *  Mehrab arch signature. */
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { View } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { ArchOutline } from '@/components/signature';
+import { goldScale, useTheme } from '@/theme';
 
 import { Button } from './Button';
 import { Text } from './Text';
@@ -21,17 +23,21 @@ export function EmptyState({ icon = 'sparkles-outline', title, message, actionLa
   const t = useTheme();
   return (
     <View style={{ alignItems: 'center', padding: t.spacing['2xl'], gap: t.spacing.md }}>
-      <View
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: 36,
-          backgroundColor: 'rgba(201,149,106,0.12)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Ionicons name={icon} size={32} color={t.colors.primary} />
+      <View style={{ width: 84, height: 94, alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}>
+        <ArchOutline width={84} height={94} color={goldScale.hairline} strokeWidth={1.5} style={{ position: 'absolute' }} />
+        <View
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            backgroundColor: goldScale.subtle,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 12,
+          }}
+        >
+          <Ionicons name={icon} size={26} color={t.colors.goldDark} />
+        </View>
       </View>
       <Text variant="h3" align="center" urdu={urdu}>
         {title}

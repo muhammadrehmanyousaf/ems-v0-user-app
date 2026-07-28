@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { FlatList, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState, Row, Skeleton, Text } from '@/components/ui';
 import { useFavoriteVendors } from '@/features/favorites/useFavoriteVendors';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
+import type { Vendor } from '@/features/vendors/vendors.types';
 import { T } from '@/i18n/T';
 import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
@@ -35,27 +37,35 @@ export default function Favorites() {
           urdu={isUrdu}
         />
       ) : isLoading ? (
-        <View style={{ padding: t.spacing.lg, gap: t.spacing.lg }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 }}>
           {[0, 1].map((i) => (
-            <View key={i} style={{ gap: 8 }}>
-              <Skeleton height={170} radius={8} />
-              <Skeleton height={16} width="60%" />
+            <View key={i} style={{ width: '50%', paddingHorizontal: 6, paddingBottom: 12, gap: 8 }}>
+              <Skeleton height={130} radius={10} />
+              <Skeleton height={14} width="70%" />
             </View>
           ))}
         </View>
       ) : (
-        <FlatList
-          data={vendors}
-          keyExtractor={(v) => String(v.id)}
-          contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.lg, paddingBottom: t.spacing['3xl'] }}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Text variant="caption" tone="muted" urdu={isUrdu} style={{ marginBottom: t.spacing.xs }}>
-              {count} {tr('common.savedVendors')}
-            </Text>
-          }
-          renderItem={({ item }) => <VendorCard vendor={item} />}
-        />
+        <View style={{ flex: 1 }}>
+          <FlashList
+            data={vendors}
+            masonry
+            numColumns={2}
+            keyExtractor={(v: Vendor) => String(v.id)}
+            contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: t.spacing['3xl'] }}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <Text variant="caption" tone="muted" urdu={isUrdu} style={{ paddingHorizontal: 6, paddingBottom: t.spacing.sm }}>
+                {count} {tr('common.savedVendors')}
+              </Text>
+            }
+            renderItem={({ item }: { item: Vendor }) => (
+              <View style={{ paddingHorizontal: 6, paddingBottom: 12 }}>
+                <VendorCard vendor={item} />
+              </View>
+            )}
+          />
+        </View>
       )}
     </View>
   );
