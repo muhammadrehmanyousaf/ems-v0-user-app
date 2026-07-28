@@ -16,7 +16,7 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; titleKey: StringKey; bodyKe
 export function HowItWorks() {
   const t = useTheme();
   return (
-    <View style={{ paddingHorizontal: t.spacing.lg, gap: t.spacing.md }}>
+    <View style={{ paddingHorizontal: t.spacing.xl, gap: t.spacing.md }}>
       <T k="home.threeSteps" variant="overline" tone="label" />
       <Stack gap="md">
         {STEPS.map((s, i) => (

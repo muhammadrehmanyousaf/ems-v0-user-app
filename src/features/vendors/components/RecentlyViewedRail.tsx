@@ -17,7 +17,7 @@ export function RecentlyViewedRail() {
 
   return (
     <View style={{ gap: t.spacing.md }}>
-      <View style={{ paddingHorizontal: t.spacing.lg }}>
+      <View style={{ paddingHorizontal: t.spacing.xl }}>
         <Text variant="h3">Recently viewed</Text>
       </View>
       <FlatList
@@ -25,7 +25,7 @@ export function RecentlyViewedRail() {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(v) => String(v.id)}
-        contentContainerStyle={{ paddingHorizontal: t.spacing.lg, gap: t.spacing.md }}
+        contentContainerStyle={{ paddingHorizontal: t.spacing.xl, gap: t.spacing.md }}
         renderItem={({ item }) => (
           <View style={{ width: CARD_WIDTH }}>
             <VendorCard vendor={item} />

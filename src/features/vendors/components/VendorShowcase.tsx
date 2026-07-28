@@ -25,7 +25,7 @@ export function VendorShowcase({ slug, titleKey }: { slug: string; titleKey: Str
 
   return (
     <View style={{ gap: t.spacing.md }}>
-      <Row justify="space-between" style={{ paddingHorizontal: t.spacing.lg }}>
+      <Row justify="space-between" style={{ paddingHorizontal: t.spacing.xl }}>
         <T k={titleKey} variant="h3" />
         <Pressable
           hitSlop={8}
@@ -41,7 +41,7 @@ export function VendorShowcase({ slug, titleKey }: { slug: string; titleKey: Str
       </Row>
 
       {q.isLoading ? (
-        <Row gap="md" style={{ paddingHorizontal: t.spacing.lg }}>
+        <Row gap="md" style={{ paddingHorizontal: t.spacing.xl }}>
           {[0, 1].map((i) => (
             <View key={i} style={{ width: CARD_WIDTH, gap: 8 }}>
               <Skeleton height={CARD_WIDTH * 0.55} radius={8} />
@@ -56,7 +56,7 @@ export function VendorShowcase({ slug, titleKey }: { slug: string; titleKey: Str
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(v) => String(v.id)}
-          contentContainerStyle={{ paddingHorizontal: t.spacing.lg, gap: t.spacing.md }}
+          contentContainerStyle={{ paddingHorizontal: t.spacing.xl, gap: t.spacing.md }}
           renderItem={({ item }) => (
             <View style={{ width: CARD_WIDTH }}>
               <VendorCard vendor={item} />
