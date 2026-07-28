@@ -1,13 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BottomSheetBackdrop, BottomSheetModal, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Linking, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { Carousel, type CarouselRenderItemInfo } from 'react-native-reanimated-carousel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge, Button, Card, Chip, EmptyState, Rating, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
+import { Badge, Button, Card, Chip, EmptyState, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
 import { BookingRequestModal } from '@/features/vendors/components/BookingRequestModal';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
 import { AvailabilityCalendar } from '@/features/vendors/detail/AvailabilityCalendar';
@@ -25,8 +28,10 @@ import { T } from '@/i18n/T';
 import { useT } from '@/i18n/useT';
 import { useFavoritesStore } from '@/store/favorites';
 import { useRecentlyViewedStore } from '@/store/recently-viewed';
-import { haptics, useTheme } from '@/theme';
+import { gradients, haptics, useTheme } from '@/theme';
 import { telLink, waLink } from '@/utils/contact';
+
+const HERO = 400;
 
 function asStr(v: string | string[] | undefined): string {
   return Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
@@ -36,6 +41,7 @@ export default function VendorDetail() {
   const t = useTheme();
   const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = asStr(params.id);
   const q = useVendor(id);
@@ -44,34 +50,44 @@ export default function VendorDetail() {
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const recordView = useRecentlyViewedStore((s) => s.record);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const galleryRef = useRef<BottomSheetModal>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     if (id) recordView(Number(id));
   }, [id, recordView]);
 
-  // Parallax hero: gentle zoom on pull-down, lag on scroll-up.
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
+  // Parallax hero: gentle zoom on pull-down, lag on scroll-up.
   const heroStyle = useAnimatedStyle(() => {
     const y = scrollY.value;
-    return {
-      transform: [
-        { translateY: y > 0 ? y * 0.4 : 0 },
-        { scale: y < 0 ? 1 + -y / 600 : 1 },
-      ],
-    };
+    return { transform: [{ translateY: y > 0 ? y * 0.4 : 0 }, { scale: y < 0 ? 1 + -y / 600 : 1 }] };
   });
+  // Hero overlay text fades as you scroll into the body.
+  const heroContentStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, HERO - 200], [1, 0], Extrapolation.CLAMP),
+  }));
+  // Collapsing glass header fades in once the hero scrolls away.
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [HERO - 160, HERO - 80], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />,
+    [],
+  );
 
   const vendor = q.data ?? null;
 
   if (q.isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: t.colors.screen }}>
-        <Skeleton height={320} radius={0} />
+        <Skeleton height={HERO} radius={0} />
         <Stack gap="md" style={{ padding: 24 }}>
-          <Skeleton height={24} width="70%" />
+          <Skeleton height={28} width="70%" />
           <Skeleton height={14} width="40%" />
           <Skeleton height={60} />
         </Stack>
@@ -92,14 +108,23 @@ export default function VendorDetail() {
   const hero = gallery[0] ?? null;
   const price = vendorPriceLabel(vendor);
   const verified = isVerified(vendor);
+  const category = vendorCategoryLabel(vendor);
+  const location = vendorLocation(vendor);
+  const hasReviews = vendor.reviewCount > 0;
   const amenities = (Array.isArray(vendor.amenities) ? vendor.amenities : []).filter(Boolean);
   const services = (Array.isArray(vendor.serviceProvided) ? vendor.serviceProvided : []).filter(Boolean);
   const tags = [...services, ...amenities].slice(0, 12);
   const packages = Array.isArray(vendor.packages) ? vendor.packages : [];
   const relatedVendors = (related.data ?? []).filter((v) => v.id !== vendor.id).slice(0, 8);
   const phone = vendor.whatsappNumber ?? vendor.vendor?.phoneNumber;
-  const shareMsg = `${vendor.name} on Wedding Wala`;
+  const galleryH = Math.max(240, H - insets.top - 64);
 
+  const openGallery = (i: number) => {
+    if (gallery.length === 0) return;
+    haptics.light();
+    setGalleryIndex(i);
+    galleryRef.current?.present();
+  };
   const onWhatsApp = () => {
     const link = waLink(phone, `Assalam o Alaikum, I found ${vendor.name} on Wedding Wala and would like to enquire.`);
     if (link) Linking.openURL(link).catch(() => {});
@@ -109,85 +134,87 @@ export default function VendorDetail() {
     if (link) Linking.openURL(link).catch(() => {});
   };
   const onShare = () => {
-    Share.share({ message: shareMsg }).catch(() => {});
+    Share.share({ message: `${vendor.name} on Wedding Wala` }).catch(() => {});
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen }}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 96 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        {/* Hero */}
-        <View style={{ height: 320, backgroundColor: t.colors.sand, overflow: 'hidden' }}>
+        {/* Cinematic hero with overlaid identity */}
+        <View style={{ height: HERO, backgroundColor: t.colors.sand, overflow: 'hidden' }}>
           <Animated.View style={[StyleSheet.absoluteFill, heroStyle]}>
             {hero ? (
-              <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+              <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" transition={280} />
             ) : (
               <View style={[StyleSheet.absoluteFill, styles.center]}>
                 <Ionicons name="image-outline" size={48} color={t.colors.textLabel} />
               </View>
             )}
-            <LinearGradient
-              colors={['rgba(44,24,16,0.45)', 'transparent', 'rgba(44,24,16,0.15)']}
-              style={StyleSheet.absoluteFill}
-            />
+            <LinearGradient colors={gradients.topScrim} style={styles.heroTopScrim} pointerEvents="none" />
+            <LinearGradient colors={gradients.photoScrim} style={styles.heroBottomScrim} pointerEvents="none" />
           </Animated.View>
-          <BackButton top={insets.top} />
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              if (id) toggleFav(Number(id));
-            }}
-            style={[styles.heroBtn, { top: insets.top + 4, right: 16 }]}
-          >
-            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={22} color={isFav ? t.colors.danger : t.colors.charcoalSurface} />
-          </Pressable>
-          {vendor.sponsored ? (
-            <View style={{ position: 'absolute', bottom: 16, left: 16 }}>
-              <Badge label="Featured" tone="gold" icon="star" />
-            </View>
-          ) : null}
-        </View>
 
-        {/* Head */}
-        <Stack gap="lg" style={{ padding: 24 }}>
-          <Stack gap="xs">
-            <Row gap="sm" justify="space-between">
-              <Text variant="overline" tone="label">
-                {vendorCategoryLabel(vendor).toUpperCase()}
+          {/* Tap-to-open gallery over the image (below the controls) */}
+          <Pressable onPress={() => openGallery(0)} style={StyleSheet.absoluteFill} />
+
+          <Animated.View style={[styles.heroContent, heroContentStyle]} pointerEvents="none">
+            <Row gap="sm" style={{ marginBottom: 6 }}>
+              <Text variant="overline" tone="onDark" style={{ letterSpacing: 1.6, opacity: 0.92 }}>
+                {category.toUpperCase()}
               </Text>
               {verified ? <Badge label="Verified" tone="gold" icon="checkmark-circle" /> : null}
             </Row>
-            <Text variant="display">{vendor.name}</Text>
-            {vendorLocation(vendor) ? (
-              <Row gap="xxs">
-                <Ionicons name="location-outline" size={15} color={t.colors.textMuted} />
-                <Text variant="body" tone="muted">
-                  {vendorLocation(vendor)}
+            <Text variant="display" tone="onDark" numberOfLines={2}>
+              {vendor.name}
+            </Text>
+            {location ? (
+              <Row gap="xxs" style={{ marginTop: 4 }}>
+                <Ionicons name="location-outline" size={15} color={t.colors.onDark} />
+                <Text variant="body" tone="onDark" numberOfLines={1} style={{ opacity: 0.9 }}>
+                  {location}
                 </Text>
               </Row>
             ) : null}
-          </Stack>
-
-          <Row gap="lg" justify="space-between">
-            {vendor.reviewCount > 0 ? (
-              <Rating value={vendor.rating} reviewCount={vendor.reviewCount} size={48} />
-            ) : (
-              <Badge label={tr('detail.newListing')} urdu={isUrdu} tone="rose" />
-            )}
-            <Stack gap="none" style={{ alignItems: 'flex-end' }}>
-              <Text variant="caption" tone="muted" urdu={isUrdu}>
-                {price.onRequest ? tr('detail.pricing') : tr('detail.startingFrom')}
+            <Row gap="md" align="center" style={{ marginTop: 12 }}>
+              {hasReviews ? (
+                <Row gap="xxs">
+                  <Ionicons name="star" size={15} color={t.colors.goldLight} />
+                  <Text variant="bodyMedium" tone="onDark">
+                    {vendor.rating.toFixed(1)}
+                  </Text>
+                  <Text variant="caption" tone="onDark" style={{ opacity: 0.8 }}>
+                    ({vendor.reviewCount})
+                  </Text>
+                </Row>
+              ) : (
+                <Badge label={tr('detail.newListing')} urdu={isUrdu} tone="rose" />
+              )}
+              <Text variant="body" tone="onDark" style={{ opacity: 0.5 }}>
+                ·
               </Text>
-              <Text variant="h3" tone={price.onRequest ? 'muted' : 'gold'}>
-                {price.text}
+              <Text variant="bodyMedium" tone="onDark">
+                {price.onRequest ? tr('detail.askPrice') : price.text}
               </Text>
-            </Stack>
-          </Row>
+            </Row>
+          </Animated.View>
 
+          {gallery.length > 1 ? (
+            <Pressable onPress={() => openGallery(0)} style={styles.galleryCount}>
+              <Ionicons name="images-outline" size={14} color={t.colors.onDark} />
+              <Text variant="caption" tone="onDark">
+                {gallery.length}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* Body */}
+        <Stack gap="lg" style={{ padding: 24, paddingTop: 20 }}>
           {vendor.reliability && vendor.reliability.tier !== 'newcomer' ? (
             <Row gap="sm">
               <Ionicons name="shield-checkmark-outline" size={16} color={t.colors.goldDark} />
@@ -197,7 +224,6 @@ export default function VendorDetail() {
             </Row>
           ) : null}
 
-          {/* About */}
           {vendor.description ? (
             <Section title={tr('detail.about')} urdu={isUrdu}>
               <Text variant="body" tone="body">
@@ -206,13 +232,13 @@ export default function VendorDetail() {
             </Section>
           ) : null}
 
-          {/* Packages */}
           {packages.length > 0 ? (
             <Section title={tr('detail.packages')} urdu={isUrdu}>
               <Stack gap="sm">
                 {packages.map((p, i) => (
                   <Card key={p.id ?? i}>
-                    <Row justify="space-between">
+                    <Row gap="md">
+                      <View style={[styles.pkgAccent, { backgroundColor: t.colors.gold }]} />
                       <Stack gap="xxs" style={{ flex: 1 }}>
                         <Text variant="title">{p.name ?? `Package ${i + 1}`}</Text>
                         {p.description ? (
@@ -233,7 +259,6 @@ export default function VendorDetail() {
             </Section>
           ) : null}
 
-          {/* Services & amenities */}
           {tags.length > 0 ? (
             <Section title={tr('detail.services')} urdu={isUrdu}>
               <Row gap="sm" wrap>
@@ -244,31 +269,27 @@ export default function VendorDetail() {
             </Section>
           ) : null}
 
-          {/* Gallery strip */}
           {gallery.length > 1 ? (
             <Section title={tr('detail.gallery')} urdu={isUrdu}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                 {gallery.map((uri, i) => (
-                  <Image
-                    key={i}
-                    source={{ uri }}
-                    style={{ width: 160, height: 120, borderRadius: t.radius.md, backgroundColor: t.colors.sand }}
-                    contentFit="cover"
-                    transition={200}
-                  />
+                  <Pressable key={i} onPress={() => openGallery(i)}>
+                    <Image
+                      source={{ uri }}
+                      style={{ width: 172, height: 128, borderRadius: t.radius.md, backgroundColor: t.colors.sand }}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  </Pressable>
                 ))}
               </ScrollView>
             </Section>
           ) : null}
 
-          {/* Reviews */}
           <ReviewsSection vendorId={vendor.id} rating={vendor.rating} reviewCount={vendor.reviewCount} />
-
-          {/* Availability */}
           <AvailabilityCalendar vendorId={vendor.id} />
         </Stack>
 
-        {/* Related */}
         {relatedVendors.length > 0 ? (
           <View style={{ gap: t.spacing.md, paddingBottom: t.spacing.lg }}>
             <T k="detail.moreFromVendor" variant="h3" style={{ paddingHorizontal: 24 }} />
@@ -283,22 +304,36 @@ export default function VendorDetail() {
         ) : null}
       </Animated.ScrollView>
 
-      {/* Sticky contact bar */}
-      <View
-        style={[
-          styles.bar,
-          {
-            backgroundColor: t.colors.surface,
-            borderTopColor: t.colors.border,
-            paddingBottom: insets.bottom + 8,
-          },
-        ]}
+      {/* Collapsing glass header */}
+      <Animated.View style={[styles.collapseHeader, { height: insets.top + 52 }, headerStyle]} pointerEvents="none">
+        <BlurView intensity={32} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border }} />
+        <Text variant="title" numberOfLines={1} style={{ marginTop: insets.top + 12, marginHorizontal: 60, textAlign: 'center' }}>
+          {vendor.name}
+        </Text>
+      </Animated.View>
+
+      {/* Persistent controls */}
+      <BackButton top={insets.top} />
+      <Pressable
+        onPress={() => {
+          haptics.light();
+          if (id) toggleFav(Number(id));
+        }}
+        style={[styles.heroBtn, { top: insets.top + 4, right: 16 }]}
       >
+        <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={22} color={isFav ? t.colors.danger : t.colors.charcoalSurface} />
+      </Pressable>
+
+      {/* Glass sticky CTA bar */}
+      <View style={[styles.bar, { paddingBottom: insets.bottom + 8 }]}>
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border }} />
         <Row gap="sm">
           <IconAction icon="logo-whatsapp" label={tr('detail.whatsapp')} urdu={isUrdu} onPress={onWhatsApp} disabled={!phone} />
           <IconAction icon="call-outline" label={tr('detail.call')} urdu={isUrdu} onPress={onCall} disabled={!phone} />
           <IconAction icon="share-social-outline" label={tr('detail.share')} urdu={isUrdu} onPress={onShare} />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, borderRadius: t.radius.sm, ...t.elevation.glow }}>
             <Button label={tr('detail.requestBooking')} urdu={isUrdu} icon="calendar-outline" fullWidth onPress={() => setInquiryOpen(true)} />
           </View>
         </Row>
@@ -310,6 +345,37 @@ export default function VendorDetail() {
         businessId={vendor.id}
         packages={packages}
       />
+
+      {/* Full-screen gallery sheet */}
+      <BottomSheetModal
+        ref={galleryRef}
+        snapPoints={['100%']}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: t.colors.charcoalSurface }}
+        handleIndicatorStyle={{ backgroundColor: t.colors.onDark }}
+      >
+        <View style={{ height: galleryH }}>
+          {gallery.length > 1 ? (
+            <Carousel
+              data={gallery}
+              defaultIndex={Math.min(galleryIndex, gallery.length - 1)}
+              loop
+              style={{ width: W, height: galleryH }}
+              renderItem={({ item }: CarouselRenderItemInfo<string>) => (
+                <View style={{ width: W, height: galleryH, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image source={{ uri: item }} style={{ width: W, height: galleryH }} contentFit="contain" transition={200} />
+                </View>
+              )}
+            />
+          ) : gallery[0] ? (
+            <Image source={{ uri: gallery[0] }} style={{ width: W, height: galleryH }} contentFit="contain" />
+          ) : null}
+          <Pressable onPress={() => galleryRef.current?.dismiss()} style={[styles.heroBtn, { top: 12, right: 16 }]}>
+            <Ionicons name="close" size={22} color={t.colors.charcoalSurface} />
+          </Pressable>
+        </View>
+      </BottomSheetModal>
     </View>
   );
 }
@@ -338,11 +404,7 @@ function IconAction({
 }) {
   const t = useTheme();
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={{ alignItems: 'center', gap: 2, opacity: disabled ? 0.4 : 1, minWidth: 52 }}
-    >
+    <Pressable onPress={onPress} disabled={disabled} style={{ alignItems: 'center', gap: 2, opacity: disabled ? 0.4 : 1, minWidth: 52 }}>
       <View
         style={{
           width: 44,
@@ -350,6 +412,7 @@ function IconAction({
           borderRadius: 22,
           borderWidth: 1,
           borderColor: t.colors.border,
+          backgroundColor: t.colors.surface,
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -365,6 +428,12 @@ function IconAction({
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
+  heroTopScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 150 },
+  heroBottomScrim: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 280 },
+  heroContent: { position: 'absolute', left: 24, right: 24, bottom: 22 },
+  galleryCount: { position: 'absolute', bottom: 18, right: 16, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(44,24,16,0.5)', paddingHorizontal: 10, height: 30, borderRadius: 15 },
+  collapseHeader: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
+  pkgAccent: { width: 3, alignSelf: 'stretch', borderRadius: 2 },
   heroBtn: {
     position: 'absolute',
     width: 40,
@@ -373,6 +442,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(253,248,242,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   bar: {
     position: 'absolute',
@@ -381,6 +451,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 10,
-    borderTopWidth: 1,
+    overflow: 'hidden',
   },
 });
