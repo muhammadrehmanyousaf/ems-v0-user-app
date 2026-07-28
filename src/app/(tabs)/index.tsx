@@ -1,96 +1,37 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
-import { Badge, Card, Chip, Row, Stack, Text } from '@/components/ui';
+import { Card, Chip, Row, Stack } from '@/components/ui';
+import { CategoryMosaic } from '@/features/home/CategoryMosaic';
+import { FeaturedSpotlight } from '@/features/home/FeaturedSpotlight';
+import { HeroCarousel } from '@/features/home/HeroCarousel';
 import { HowItWorks } from '@/features/home/HowItWorks';
 import { FEATURED_CITIES } from '@/features/vendors/cities';
-import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
 import { RecentlyViewedRail } from '@/features/vendors/components/RecentlyViewedRail';
 import { VendorShowcase } from '@/features/vendors/components/VendorShowcase';
-import { usePlatformStats } from '@/features/vendors/vendors.queries';
 import { T } from '@/i18n/T';
-import { useT } from '@/i18n/useT';
-import { useTheme } from '@/theme';
-import { BridalWash, JaalPattern, ShimmerText } from '@/theme/textures';
+import { gradients, useTheme } from '@/theme';
 
 export default function Home() {
   const t = useTheme();
-  const { t: tr, isUrdu } = useT();
-  const stats = usePlatformStats();
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.colors.screen }} showsVerticalScrollIndicator={false}>
-      {/* Hero */}
-      <BridalWash style={{ paddingTop: 76, paddingBottom: 32, paddingHorizontal: 24 }}>
-        <JaalPattern />
-        <View style={{ alignItems: 'center', gap: 6 }}>
-          <Badge label={tr('home.badge')} urdu={isUrdu} tone="rose" icon="heart" />
-          <Text variant="overline" tone="label" align="center" style={{ marginTop: 10 }}>
-            LIGHT · LUXURIOUS · UNFORGETTABLE
-          </Text>
-          <Text variant="hero" align="center" style={{ marginTop: 6 }}>
-            Where every
-          </Text>
-          <ShimmerText fontSize={40}>love story finds</ShimmerText>
-          <Text variant="hero" italic align="center">
-            its perfect setting
-          </Text>
-
-          {/* Search entry → Explore */}
-          <Pressable
-            onPress={() => router.push('/explore')}
-            style={{
-              marginTop: 20,
-              alignSelf: 'stretch',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              backgroundColor: t.colors.card,
-              borderColor: t.colors.border,
-              borderWidth: 1,
-              borderRadius: t.radius.sm,
-              paddingHorizontal: 16,
-              height: 52,
-            }}
-          >
-            <Ionicons name="search-outline" size={20} color={t.colors.textLabel} />
-            <T k="home.searchPlaceholder" variant="body" tone="muted" />
-          </Pressable>
-
-          {/* Live stats */}
-          {stats.data ? (
-            <Row gap="md" style={{ marginTop: 14 }}>
-              <Text variant="caption" tone="muted" urdu={isUrdu}>
-                <Text variant="caption" tone="gold" weight="bold">
-                  {stats.data.vendors.toLocaleString('en-PK')}+
-                </Text>{' '}
-                {tr('home.vendors')}
-              </Text>
-              <Text variant="caption" tone="muted">·</Text>
-              <Text variant="caption" tone="muted" urdu={isUrdu}>
-                <Text variant="caption" tone="gold" weight="bold">
-                  {stats.data.cities}
-                </Text>{' '}
-                {tr('home.cities')}
-              </Text>
-            </Row>
-          ) : null}
-        </View>
-      </BridalWash>
+      <HeroCarousel />
 
       <Stack gap="xl" style={{ paddingVertical: 24 }}>
         <RecentlyViewedRail />
 
-        <View style={{ paddingHorizontal: 24, gap: t.spacing.md }}>
-          <T k="home.browseCategory" variant="overline" tone="label" />
-          <CategoryGrid />
-        </View>
+        <CategoryMosaic />
+
+        <FeaturedSpotlight />
 
         {/* Browse by city */}
         <View style={{ gap: t.spacing.md }}>
           <View style={{ paddingHorizontal: 24 }}>
-            <T k="home.browseCity" variant="overline" tone="label" />
+            <T k="home.browseCity" variant="overline" tone="label" style={{ letterSpacing: 1.5 }} />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: t.spacing.sm }}>
             {FEATURED_CITIES.map((c) => (
@@ -102,7 +43,10 @@ export default function Home() {
         <VendorShowcase slug="wedding-venues" titleKey="home.featuredVenues" />
         <VendorShowcase slug="wedding-photographers" titleKey="home.topPhotographers" />
 
-        <HowItWorks />
+        {/* Warm crescendo band (blush → ivory, arch-brand) — light-luxe, never dark */}
+        <LinearGradient colors={gradients.roseWash} style={{ paddingVertical: 28 }}>
+          <HowItWorks />
+        </LinearGradient>
 
         <VendorShowcase slug="caterers" titleKey="home.caterers" />
         <VendorShowcase slug="bridal-makeup-artists" titleKey="home.bridalMakeup" />

@@ -57,6 +57,7 @@ export const STRINGS = {
   'home.topPhotographers': { en: 'Top photographers', ur: 'بہترین فوٹوگرافرز' },
   'home.caterers': { en: 'Caterers', ur: 'کیٹررز' },
   'home.bridalMakeup': { en: 'Bridal makeup', ur: 'دلہن میک اپ' },
+  'home.featuredThisWeek': { en: 'FEATURED THIS WEEK', ur: 'اس ہفتے کی نمایاں' },
   'home.weddingGuides': { en: 'Wedding guides', ur: 'شادی گائیڈز' },
   'home.guidesSub': { en: 'Costs, rasms, choosing vendors & more', ur: 'اخراجات، رسمیں، وینڈرز کا انتخاب اور مزید' },
   'home.threeSteps': { en: 'THREE STEPS TO YOUR SHAADI', ur: 'آپ کی شادی کے تین مراحل' },
