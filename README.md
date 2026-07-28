@@ -1,56 +1,71 @@
-# Welcome to your Expo app 👋
+# Wedding Wala — Consumer App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The customer-facing mobile app for [weddingwala.pk](https://www.weddingwala.pk) — Pakistan's wedding & event marketplace. Couples discover vendors, judge them, contact them (WhatsApp/Call/Inquiry), shortlist & compare, and plan their whole shaadi. This is the **customer** counterpart to the vendor app (`emsl-app`) — the "foodpanda" to its "foodpanda partner".
 
-## Get started
+Built as a faithful, elevated native port of the website's **Bridal Design System** (ivory / champagne-gold / rose · Playfair Display + DM Sans + Noto Nastaliq Urdu), wired to the same live production backend.
 
-1. Install dependencies
+## Stack
 
-   ```bash
-   npm install
-   ```
+Expo SDK 57 · React Native 0.86 · React 19 · expo-router (typed routes) · TanStack Query v5 · Zustand v5 · Reanimated 4 · axios. Mirrors the vendor app's proven setup.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run (development)
 
 ```bash
-npm run reset-project
+npm install
+npx expo start            # dev server (scan QR with Expo Go / dev client)
+npx expo start --android  # Android emulator/device
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Web preview + live data:** the browser blocks cross-origin calls to the Railway API (CORS), so the web preview needs a local proxy. Native builds need none.
 
-### Other setup steps
+```bash
+# terminal 1 — CORS proxy → Railway
+node cors-proxy.js                      # forwards :8790 → Railway with permissive CORS
+# terminal 2 — web pointed at the proxy
+EXPO_PUBLIC_API_URL="http://localhost:8790/api/v1" npx expo start --web
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Build (APK)
 
-## Learn more
+```bash
+export EXPO_TOKEN="<token>"
+npx eas build -p android --profile preview   # → installable APK
+```
+Profiles in `eas.json`: `preview` (APK) · `production` (app-bundle) · `development` (dev client). All point at the live backend.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Quality gates
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx tsc --noEmit                 # types
+npx eslint "src/**/*.{ts,tsx}"   # lint
+npm run verify:contrast          # WCAG-AA on the bridal palette (19 pairs)
+```
 
-## Join the community
+## Architecture
 
-Join our community of developers creating universal apps.
+```
+src/
+  app/            expo-router routes: (tabs) Home/Explore/Plan/Inbox/Account,
+                  vendor/[id], auth/*, account/*, tools/*, guides, favorites,
+                  compare, onboarding
+  components/ui/  bridal primitives (Text, Button, Card, Input, Chip, Rating, …)
+  features/       per-domain: vendors, explore, favorites, compare, planning,
+                  account, guides, home
+  lib/api/        axios client (envelope unwrap, bearer, 401 logout, paginator)
+                  + endpoints; lib/query (TanStack)
+  store/          zustand: auth, favorites, compare, locale, recently-viewed,
+                  onboarding
+  theme/          Bridal design tokens, fonts, textures, motion, haptics
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Design source of truth:** the palette/typography are ported byte-for-byte from the live site — see `theme/tokens.ts` (and `../consumer-app-plan/DESIGN-TOKENS.md`). Never guess a colour; re-verify against the live site.
+
+## What's built
+
+Discovery (Home, Explore + 17 filters/6 sorts, Vendor Detail with reviews +
+availability + sticky WhatsApp/Call/Inquiry bar, Favourites, Compare) · Planning
+(Budget, Checklist, Guest list, Timeline) · Account (login/register, profile,
+bookings, notifications) · Guides · onboarding. All live-verified.
+
+**Deferred:** online booking + Stripe (the real PK flow is WhatsApp→cash) and
+chat threads (start post-booking) — both downstream of bookings.
