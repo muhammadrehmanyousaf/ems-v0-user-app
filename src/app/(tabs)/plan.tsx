@@ -17,11 +17,13 @@ import { useLocalList } from '@/features/planning/useLocalList';
 import { formatRs } from '@/features/vendors/vendor-display';
 import type { StringKey } from '@/i18n/strings';
 import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useFavoritesStore } from '@/store/favorites';
 import { useTheme } from '@/theme';
 
 export default function Plan() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const savedCount = useFavoritesStore((s) => s.ids.size);
 
   const budget = useLocalList<BudgetItem>('ww.plan.budget', BUDGET_SEED);
@@ -57,14 +59,14 @@ export default function Plan() {
               </View>
               <Stack gap="xxs">
                 <T k="plan.shortlist" variant="title" />
-                <Text variant="caption" tone="muted">{savedCount} saved {savedCount === 1 ? 'vendor' : 'vendors'}</Text>
+                <Text variant="caption" tone="muted" urdu={isUrdu}>{savedCount} {tr('common.savedVendors')}</Text>
               </Stack>
             </Row>
             <Ionicons name="chevron-forward" size={20} color={t.colors.textMuted} />
           </Row>
         </Card>
 
-        <Section title="PLANNING TOOLS">
+        <Section title={tr('plan.tools')} urdu={isUrdu}>
           <Stack gap="md">
             {tools.map((tool) => (
               <Card key={tool.key} onPress={() => router.push(tool.href)}>

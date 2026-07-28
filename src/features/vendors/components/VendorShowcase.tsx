@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { Row, Skeleton, Text } from '@/components/ui';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 
 import { useVendorsByCategory } from '../vendors.queries';
@@ -11,8 +14,9 @@ import { VendorCard } from './VendorCard';
 
 const CARD_WIDTH = 260;
 
-export function VendorShowcase({ slug, title }: { slug: string; title: string }) {
+export function VendorShowcase({ slug, titleKey }: { slug: string; titleKey: StringKey }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const q = useVendorsByCategory(slug, 10);
   const vendors = q.data?.vendors ?? [];
 
@@ -22,14 +26,14 @@ export function VendorShowcase({ slug, title }: { slug: string; title: string })
   return (
     <View style={{ gap: t.spacing.md }}>
       <Row justify="space-between" style={{ paddingHorizontal: t.spacing.lg }}>
-        <Text variant="h3">{title}</Text>
+        <T k={titleKey} variant="h3" />
         <Pressable
           hitSlop={8}
           onPress={() => router.push({ pathname: '/explore', params: { category: slug } })}
         >
           <Row gap="xxs">
-            <Text variant="label" tone="gold">
-              See all
+            <Text variant="label" tone="gold" urdu={isUrdu}>
+              {tr('common.seeAll')}
             </Text>
             <Ionicons name="chevron-forward" size={14} color={t.colors.goldDark} />
           </Row>

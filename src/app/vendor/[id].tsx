@@ -21,6 +21,8 @@ import {
   vendorPriceLabel,
 } from '@/features/vendors/vendor-display';
 import { useRelatedVendors, useVendor } from '@/features/vendors/vendors.queries';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useFavoritesStore } from '@/store/favorites';
 import { useRecentlyViewedStore } from '@/store/recently-viewed';
 import { haptics, useTheme } from '@/theme';
@@ -32,6 +34,7 @@ function asStr(v: string | string[] | undefined): string {
 
 export default function VendorDetail() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = asStr(params.id);
@@ -80,7 +83,7 @@ export default function VendorDetail() {
     return (
       <View style={{ flex: 1, backgroundColor: t.colors.screen, paddingTop: insets.top }}>
         <BackButton top={insets.top} />
-        <EmptyState icon="alert-circle-outline" title="Vendor not found" message="This listing may have been removed." />
+        <EmptyState icon="alert-circle-outline" title={tr('detail.notFound')} message={tr('detail.notFoundSub')} urdu={isUrdu} />
       </View>
     );
   }
@@ -173,11 +176,11 @@ export default function VendorDetail() {
             {vendor.reviewCount > 0 ? (
               <Rating value={vendor.rating} reviewCount={vendor.reviewCount} size={48} />
             ) : (
-              <Badge label="New listing" tone="rose" />
+              <Badge label={tr('detail.newListing')} urdu={isUrdu} tone="rose" />
             )}
             <Stack gap="none" style={{ alignItems: 'flex-end' }}>
-              <Text variant="caption" tone="muted">
-                {price.onRequest ? 'Pricing' : 'Starting from'}
+              <Text variant="caption" tone="muted" urdu={isUrdu}>
+                {price.onRequest ? tr('detail.pricing') : tr('detail.startingFrom')}
               </Text>
               <Text variant="h3" tone={price.onRequest ? 'muted' : 'gold'}>
                 {price.text}
@@ -188,15 +191,15 @@ export default function VendorDetail() {
           {vendor.reliability && vendor.reliability.tier !== 'newcomer' ? (
             <Row gap="sm">
               <Ionicons name="shield-checkmark-outline" size={16} color={t.colors.goldDark} />
-              <Text variant="caption" tone="body">
-                Reliability: <Text variant="caption" tone="gold" weight="medium">{vendor.reliability.tier}</Text>
+              <Text variant="caption" tone="body" urdu={isUrdu}>
+                {tr('detail.reliability')}: <Text variant="caption" tone="gold" weight="medium">{vendor.reliability.tier}</Text>
               </Text>
             </Row>
           ) : null}
 
           {/* About */}
           {vendor.description ? (
-            <Section title="ABOUT">
+            <Section title={tr('detail.about')} urdu={isUrdu}>
               <Text variant="body" tone="body">
                 {vendor.description}
               </Text>
@@ -205,7 +208,7 @@ export default function VendorDetail() {
 
           {/* Packages */}
           {packages.length > 0 ? (
-            <Section title="PACKAGES">
+            <Section title={tr('detail.packages')} urdu={isUrdu}>
               <Stack gap="sm">
                 {packages.map((p, i) => (
                   <Card key={p.id ?? i}>
@@ -232,7 +235,7 @@ export default function VendorDetail() {
 
           {/* Services & amenities */}
           {tags.length > 0 ? (
-            <Section title="SERVICES & AMENITIES">
+            <Section title={tr('detail.services')} urdu={isUrdu}>
               <Row gap="sm" wrap>
                 {tags.map((tag, i) => (
                   <Chip key={`${tag}-${i}`} label={String(tag)} />
@@ -243,7 +246,7 @@ export default function VendorDetail() {
 
           {/* Gallery strip */}
           {gallery.length > 1 ? (
-            <Section title="GALLERY">
+            <Section title={tr('detail.gallery')} urdu={isUrdu}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                 {gallery.map((uri, i) => (
                   <Image
@@ -268,9 +271,7 @@ export default function VendorDetail() {
         {/* Related */}
         {relatedVendors.length > 0 ? (
           <View style={{ gap: t.spacing.md, paddingBottom: t.spacing.lg }}>
-            <Text variant="h3" style={{ paddingHorizontal: 24 }}>
-              More from this vendor
-            </Text>
+            <T k="detail.moreFromVendor" variant="h3" style={{ paddingHorizontal: 24 }} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}>
               {relatedVendors.map((v) => (
                 <View key={v.id} style={{ width: 240 }}>
@@ -294,11 +295,11 @@ export default function VendorDetail() {
         ]}
       >
         <Row gap="sm">
-          <IconAction icon="logo-whatsapp" label="WhatsApp" onPress={onWhatsApp} disabled={!phone} />
-          <IconAction icon="call-outline" label="Call" onPress={onCall} disabled={!phone} />
-          <IconAction icon="share-social-outline" label="Share" onPress={onShare} />
+          <IconAction icon="logo-whatsapp" label={tr('detail.whatsapp')} urdu={isUrdu} onPress={onWhatsApp} disabled={!phone} />
+          <IconAction icon="call-outline" label={tr('detail.call')} urdu={isUrdu} onPress={onCall} disabled={!phone} />
+          <IconAction icon="share-social-outline" label={tr('detail.share')} urdu={isUrdu} onPress={onShare} />
           <View style={{ flex: 1 }}>
-            <Button label="Request booking" icon="calendar-outline" fullWidth onPress={() => setInquiryOpen(true)} />
+            <Button label={tr('detail.requestBooking')} urdu={isUrdu} icon="calendar-outline" fullWidth onPress={() => setInquiryOpen(true)} />
           </View>
         </Row>
       </View>
@@ -307,7 +308,6 @@ export default function VendorDetail() {
         visible={inquiryOpen}
         onClose={() => setInquiryOpen(false)}
         businessId={vendor.id}
-        vendorName={vendor.name}
         packages={packages}
       />
     </View>
@@ -328,11 +328,13 @@ function IconAction({
   label,
   onPress,
   disabled,
+  urdu,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  urdu?: boolean;
 }) {
   const t = useTheme();
   return (
@@ -354,7 +356,7 @@ function IconAction({
       >
         <Ionicons name={icon} size={20} color={t.colors.goldDark} />
       </View>
-      <Text variant="overline" tone="muted">
+      <Text variant="overline" tone="muted" urdu={urdu}>
         {label}
       </Text>
     </Pressable>

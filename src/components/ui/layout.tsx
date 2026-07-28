@@ -58,11 +58,13 @@ export function Section({
   action,
   children,
   gap = 'md',
+  urdu,
 }: {
   title?: string;
   action?: ReactNode;
   children: ReactNode;
   gap?: Spacing;
+  urdu?: boolean;
 }) {
   const t = useTheme();
   return (
@@ -70,7 +72,7 @@ export function Section({
       {title || action ? (
         <Row justify="space-between">
           {title ? (
-            <Text variant="overline" tone="label">
+            <Text variant="overline" tone="label" urdu={urdu}>
               {title}
             </Text>
           ) : (

@@ -13,9 +13,11 @@ export interface EmptyStateProps {
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** Render title/message/CTA with the Nastaliq Urdu family (RTL). */
+  urdu?: boolean;
 }
 
-export function EmptyState({ icon = 'sparkles-outline', title, message, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ icon = 'sparkles-outline', title, message, actionLabel, onAction, urdu }: EmptyStateProps) {
   const t = useTheme();
   return (
     <View style={{ alignItems: 'center', padding: t.spacing['2xl'], gap: t.spacing.md }}>
@@ -31,17 +33,17 @@ export function EmptyState({ icon = 'sparkles-outline', title, message, actionLa
       >
         <Ionicons name={icon} size={32} color={t.colors.primary} />
       </View>
-      <Text variant="h3" align="center">
+      <Text variant="h3" align="center" urdu={urdu}>
         {title}
       </Text>
       {message ? (
-        <Text variant="body" tone="muted" align="center">
+        <Text variant="body" tone="muted" align="center" urdu={urdu}>
           {message}
         </Text>
       ) : null}
       {actionLabel && onAction ? (
         <View style={{ marginTop: t.spacing.sm }}>
-          <Button label={actionLabel} onPress={onAction} variant="secondary" />
+          <Button label={actionLabel} onPress={onAction} variant="secondary" urdu={urdu} />
         </View>
       ) : null}
     </View>

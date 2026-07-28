@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState, Row, Skeleton, Stack, Text } from '@/components/ui';
 import { useMarkAllRead, useMarkNotificationRead, useNotifications } from '@/features/account/account.queries';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import type { AppNotification } from '@/lib/api/endpoints/account';
 import { useAuthStore } from '@/store/auth';
 import { haptics, useTheme } from '@/theme';
@@ -32,6 +34,7 @@ function relTime(iso?: string): string {
 
 export default function Inbox() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const authed = useAuthStore((s) => s.status === 'authenticated');
   const q = useNotifications();
@@ -44,16 +47,16 @@ export default function Inbox() {
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen, paddingTop: insets.top }}>
       <Row justify="space-between" style={{ paddingHorizontal: t.spacing.lg, paddingVertical: t.spacing.sm }}>
-        <Text variant="h1">Inbox</Text>
+        <T k="inbox.title" variant="h1" />
         {authed && unread > 0 ? (
           <Pressable onPress={() => { haptics.light(); markAll.mutate(); }} hitSlop={8}>
-            <Text variant="label" tone="gold">Mark all read</Text>
+            <Text variant="label" tone="gold" urdu={isUrdu}>{tr('inbox.markAllRead')}</Text>
           </Pressable>
         ) : null}
       </Row>
 
       {!authed ? (
-        <EmptyState icon="notifications-outline" title="Sign in for your inbox" message="Booking updates and vendor messages appear here." actionLabel="Sign in" onAction={() => router.push('/auth/login')} />
+        <EmptyState icon="notifications-outline" title={tr('inbox.signInTitle')} message={tr('inbox.signInSub')} actionLabel={tr('common.signIn')} onAction={() => router.push('/auth/login')} urdu={isUrdu} />
       ) : q.isLoading ? (
         <View style={{ padding: t.spacing.lg, gap: t.spacing.md }}>
           {[0, 1, 2].map((i) => <Skeleton key={i} height={64} radius={8} />)}
@@ -93,7 +96,7 @@ export default function Inbox() {
             </Pressable>
           )}
           ListEmptyComponent={
-            <EmptyState icon="notifications-outline" title="You’re all caught up" message="Booking updates and messages will appear here." />
+            <EmptyState icon="notifications-outline" title={tr('inbox.emptyTitle')} message={tr('inbox.emptySub')} urdu={isUrdu} />
           }
         />
       )}

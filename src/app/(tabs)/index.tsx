@@ -2,18 +2,21 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Badge, Card, Chip, Row, Section, Stack, Text } from '@/components/ui';
+import { Badge, Card, Chip, Row, Stack, Text } from '@/components/ui';
 import { HowItWorks } from '@/features/home/HowItWorks';
 import { FEATURED_CITIES } from '@/features/vendors/cities';
 import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
 import { RecentlyViewedRail } from '@/features/vendors/components/RecentlyViewedRail';
 import { VendorShowcase } from '@/features/vendors/components/VendorShowcase';
 import { usePlatformStats } from '@/features/vendors/vendors.queries';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 import { BridalWash, JaalPattern, ShimmerText } from '@/theme/textures';
 
 export default function Home() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const stats = usePlatformStats();
 
   return (
@@ -22,7 +25,7 @@ export default function Home() {
       <BridalWash style={{ paddingTop: 76, paddingBottom: 32, paddingHorizontal: 24 }}>
         <JaalPattern />
         <View style={{ alignItems: 'center', gap: 6 }}>
-          <Badge label="PAKISTAN'S #1 SHAADI PLATFORM" tone="rose" icon="heart" />
+          <Badge label={tr('home.badge')} urdu={isUrdu} tone="rose" icon="heart" />
           <Text variant="overline" tone="label" align="center" style={{ marginTop: 10 }}>
             LIGHT · LUXURIOUS · UNFORGETTABLE
           </Text>
@@ -52,26 +55,24 @@ export default function Home() {
             }}
           >
             <Ionicons name="search-outline" size={20} color={t.colors.textLabel} />
-            <Text variant="body" tone="muted">
-              Search vendors, venues, cities…
-            </Text>
+            <T k="home.searchPlaceholder" variant="body" tone="muted" />
           </Pressable>
 
           {/* Live stats */}
           {stats.data ? (
             <Row gap="md" style={{ marginTop: 14 }}>
-              <Text variant="caption" tone="muted">
+              <Text variant="caption" tone="muted" urdu={isUrdu}>
                 <Text variant="caption" tone="gold" weight="bold">
                   {stats.data.vendors.toLocaleString('en-PK')}+
                 </Text>{' '}
-                vendors
+                {tr('home.vendors')}
               </Text>
               <Text variant="caption" tone="muted">·</Text>
-              <Text variant="caption" tone="muted">
+              <Text variant="caption" tone="muted" urdu={isUrdu}>
                 <Text variant="caption" tone="gold" weight="bold">
                   {stats.data.cities}
                 </Text>{' '}
-                cities
+                {tr('home.cities')}
               </Text>
             </Row>
           ) : null}
@@ -81,16 +82,15 @@ export default function Home() {
       <Stack gap="xl" style={{ paddingVertical: 24 }}>
         <RecentlyViewedRail />
 
-        <View style={{ paddingHorizontal: 24 }}>
-          <Section title="BROWSE BY CATEGORY">
-            <CategoryGrid />
-          </Section>
+        <View style={{ paddingHorizontal: 24, gap: t.spacing.md }}>
+          <T k="home.browseCategory" variant="overline" tone="label" />
+          <CategoryGrid />
         </View>
 
         {/* Browse by city */}
         <View style={{ gap: t.spacing.md }}>
           <View style={{ paddingHorizontal: 24 }}>
-            <Text variant="overline" tone="label">BROWSE BY CITY</Text>
+            <T k="home.browseCity" variant="overline" tone="label" />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: t.spacing.sm }}>
             {FEATURED_CITIES.map((c) => (
@@ -99,13 +99,13 @@ export default function Home() {
           </ScrollView>
         </View>
 
-        <VendorShowcase slug="wedding-venues" title="Featured venues" />
-        <VendorShowcase slug="wedding-photographers" title="Top photographers" />
+        <VendorShowcase slug="wedding-venues" titleKey="home.featuredVenues" />
+        <VendorShowcase slug="wedding-photographers" titleKey="home.topPhotographers" />
 
         <HowItWorks />
 
-        <VendorShowcase slug="caterers" title="Caterers" />
-        <VendorShowcase slug="bridal-makeup-artists" title="Bridal makeup" />
+        <VendorShowcase slug="caterers" titleKey="home.caterers" />
+        <VendorShowcase slug="bridal-makeup-artists" titleKey="home.bridalMakeup" />
 
         {/* Guides teaser */}
         <View style={{ paddingHorizontal: 24 }}>
@@ -116,8 +116,8 @@ export default function Home() {
                   <Ionicons name="book-outline" size={22} color={t.colors.goldDark} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text variant="title">Wedding guides</Text>
-                  <Text variant="caption" tone="muted">Costs, rasms, choosing vendors & more</Text>
+                  <T k="home.weddingGuides" variant="title" />
+                  <T k="home.guidesSub" variant="caption" tone="muted" />
                 </View>
               </Row>
               <Ionicons name="chevron-forward" size={20} color={t.colors.textMuted} />
@@ -126,9 +126,7 @@ export default function Home() {
         </View>
 
         <View style={{ paddingHorizontal: 24 }}>
-          <Text variant="caption" tone="muted" align="center">
-            Every vendor here is live from the same platform as weddingwala.pk.
-          </Text>
+          <T k="home.liveNote" variant="caption" tone="muted" align="center" />
         </View>
       </Stack>
     </ScrollView>

@@ -6,6 +6,7 @@ import { Pressable, View } from 'react-native';
 
 import { Row, Section, Text } from '@/components/ui';
 import { useVendorAvailability } from '@/features/vendors/vendors.queries';
+import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -20,6 +21,7 @@ function dateKey(y: number, m: number, d: number) {
 
 export function AvailabilityCalendar({ vendorId }: { vendorId: number | string }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const today = new Date();
   const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() });
 
@@ -41,7 +43,7 @@ export function AvailabilityCalendar({ vendorId }: { vendorId: number | string }
   const next = () => setCursor((c) => (c.m === 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m: c.m + 1 }));
 
   return (
-    <Section title="AVAILABILITY">
+    <Section title={tr('detail.availability')} urdu={isUrdu}>
       <View style={{ backgroundColor: t.colors.cream, borderColor: t.colors.border, borderWidth: 1, borderRadius: t.radius.md, padding: t.spacing.md, gap: t.spacing.sm }}>
         <Row justify="space-between">
           <Pressable onPress={prev} hitSlop={8} disabled={isCurrentMonth} style={{ opacity: isCurrentMonth ? 0.3 : 1 }}>
@@ -83,15 +85,15 @@ export function AvailabilityCalendar({ vendorId }: { vendorId: number | string }
         <Row gap="lg" justify="center">
           <Row gap="xxs">
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.colors.gold }} />
-            <Text variant="caption" tone="muted">Open</Text>
+            <Text variant="caption" tone="muted" urdu={isUrdu}>{tr('detail.open')}</Text>
           </Row>
           <Row gap="xxs">
             <Text variant="caption" tone="muted" style={{ textDecorationLine: 'line-through' }}>15</Text>
-            <Text variant="caption" tone="muted">Busy</Text>
+            <Text variant="caption" tone="muted" urdu={isUrdu}>{tr('detail.busy')}</Text>
           </Row>
         </Row>
-        <Text variant="caption" tone="muted" align="center">
-          Message the vendor to confirm your date.
+        <Text variant="caption" tone="muted" align="center" urdu={isUrdu}>
+          {tr('detail.confirmDate')}
         </Text>
       </View>
     </Section>

@@ -12,16 +12,18 @@ export interface InputProps extends TextInputProps {
   icon?: keyof typeof Ionicons.glyphMap;
   onClear?: () => void;
   error?: string;
+  /** Render the label/error with the Nastaliq Urdu family. */
+  urdu?: boolean;
 }
 
-export function Input({ label, icon, onClear, error, style, value, onFocus, onBlur, ...rest }: InputProps) {
+export function Input({ label, icon, onClear, error, urdu, style, value, onFocus, onBlur, ...rest }: InputProps) {
   const t = useTheme();
   const [focused, setFocused] = useState(false);
 
   return (
     <View>
       {label ? (
-        <Text variant="label" tone="label" style={{ marginBottom: t.spacing.xs }}>
+        <Text variant="label" tone="label" urdu={urdu} style={{ marginBottom: t.spacing.xs }}>
           {label}
         </Text>
       ) : null}
@@ -63,7 +65,7 @@ export function Input({ label, icon, onClear, error, style, value, onFocus, onBl
         ) : null}
       </View>
       {error ? (
-        <Text variant="caption" tone="danger" style={{ marginTop: t.spacing.xs }}>
+        <Text variant="caption" tone="danger" urdu={urdu} style={{ marginTop: t.spacing.xs }}>
           {error}
         </Text>
       ) : null}

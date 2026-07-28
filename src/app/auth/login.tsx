@@ -5,6 +5,8 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Input, Row, Text } from '@/components/ui';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { login } from '@/lib/api/endpoints/auth';
 import { ApiError } from '@/lib/api/errors';
 import { useAuthStore } from '@/store/auth';
@@ -13,6 +15,7 @@ import { BridalWash } from '@/theme/textures';
 
 export default function Login() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const signIn = useAuthStore((s) => s.signIn);
   const [email, setEmail] = useState('');
@@ -23,7 +26,7 @@ export default function Login() {
 
   const submit = async () => {
     if (!email.trim() || !password) {
-      setError('Enter your email and password.');
+      setError(tr('auth.errEmailPassword'));
       return;
     }
     setBusy(true);
@@ -31,14 +34,14 @@ export default function Login() {
     try {
       const res = await login(email.trim(), password);
       if (!res.token) {
-        setError('Two-factor is enabled on this account. Please sign in on weddingwala.pk for now.');
+        setError(tr('auth.err2fa'));
         return;
       }
       await signIn(res.token, res.user, res.jti);
       haptics.success();
       router.back();
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Sign in failed. Please try again.';
+      const msg = e instanceof ApiError ? e.message : tr('auth.errSignIn');
       setError(msg);
     } finally {
       setBusy(false);
@@ -52,17 +55,18 @@ export default function Login() {
           <Ionicons name="chevron-back" size={24} color={t.colors.charcoalSurface} />
         </Pressable>
         <View style={{ alignItems: 'center', paddingHorizontal: 24, marginTop: 8 }}>
-          <Text variant="display" align="center">Welcome back</Text>
-          <Text variant="body" tone="muted" align="center">Sign in to save vendors, message &amp; book.</Text>
+          <T k="auth.welcomeBack" variant="display" align="center" />
+          <T k="auth.signInSub" variant="body" tone="muted" align="center" />
         </View>
       </BridalWash>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
-          <Input label="Email" placeholder="you@email.com" icon="mail-outline" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} value={email} onChangeText={setEmail} />
+          <Input label={tr('auth.email')} urdu={isUrdu} placeholder="you@email.com" icon="mail-outline" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} value={email} onChangeText={setEmail} />
           <Input
-            label="Password"
-            placeholder="Your password"
+            label={tr('auth.password')}
+            urdu={isUrdu}
+            placeholder="••••••••"
             icon="lock-closed-outline"
             secureTextEntry={!show}
             value={password}
@@ -70,14 +74,14 @@ export default function Login() {
             onClear={undefined}
           />
           <Pressable onPress={() => setShow((s) => !s)} hitSlop={6}>
-            <Text variant="caption" tone="gold">{show ? 'Hide' : 'Show'} password</Text>
+            <Text variant="caption" tone="gold" urdu={isUrdu}>{show ? tr('auth.hidePassword') : tr('auth.showPassword')}</Text>
           </Pressable>
-          {error ? <Text variant="caption" tone="danger">{error}</Text> : null}
-          <Button label="Sign in" fullWidth loading={busy} onPress={submit} />
+          {error ? <Text variant="caption" tone="danger" urdu={isUrdu}>{error}</Text> : null}
+          <Button label={tr('common.signIn')} urdu={isUrdu} fullWidth loading={busy} onPress={submit} />
           <Row justify="center" gap="xs">
-            <Text variant="body" tone="muted">New here?</Text>
+            <T k="auth.newHere" variant="body" tone="muted" />
             <Pressable onPress={() => router.replace('/auth/register')} hitSlop={6}>
-              <Text variant="body" tone="gold" weight="medium">Create an account</Text>
+              <T k="auth.createLink" variant="body" tone="gold" weight="medium" />
             </Pressable>
           </Row>
         </ScrollView>

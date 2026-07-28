@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 
 import { Button, ChipSelect, Divider, Input, Row, Stack, Text } from '@/components/ui';
+import { useT } from '@/i18n/useT';
 import { submitInquiry } from '@/lib/api/endpoints/vendors';
 import { useAuthStore } from '@/store/auth';
 import { haptics, useTheme } from '@/theme';
@@ -27,16 +28,15 @@ export function BookingRequestModal({
   visible,
   onClose,
   businessId,
-  vendorName,
   packages = [],
 }: {
   visible: boolean;
   onClose: () => void;
   businessId: number;
-  vendorName: string;
   packages?: VendorPackage[];
 }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const user = useAuthStore((s) => s.user);
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phoneNumber ?? '');
@@ -71,7 +71,7 @@ export function BookingRequestModal({
 
   const submit = async () => {
     if (!name.trim() && !phone.trim()) {
-      setError('Please add your name or phone so the vendor can reach you.');
+      setError(tr('booking.errContact'));
       return;
     }
     setSubmitting(true);
@@ -94,7 +94,7 @@ export function BookingRequestModal({
       haptics.success();
       setDone(true);
     } catch {
-      setError('Couldn’t send your request. Please try again.');
+      setError(tr('booking.errSend'));
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +106,7 @@ export function BookingRequestModal({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={{ backgroundColor: t.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' }}>
           <Row justify="space-between" style={{ padding: t.spacing.lg }}>
-            <Text variant="h2">{done ? 'Request sent' : 'Request a booking'}</Text>
+            <Text variant="h2" urdu={isUrdu}>{done ? tr('booking.sentTitle') : tr('booking.requestTitle')}</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <Ionicons name="close" size={24} color={t.colors.textMuted} />
             </Pressable>
@@ -117,26 +117,25 @@ export function BookingRequestModal({
             <Stack gap="md" style={{ padding: t.spacing.lg, paddingBottom: t.spacing.xl }}>
               <Row gap="sm">
                 <Ionicons name="checkmark-circle" size={22} color={t.colors.success} />
-                <Text variant="body" tone="body" style={{ flex: 1 }}>
-                  Your booking request for {vendorName} is sent. They’ll confirm availability and details with you
-                  directly — weddings are settled with the vendor, no online payment needed.
+                <Text variant="body" tone="body" urdu={isUrdu} style={{ flex: 1 }}>
+                  {tr('booking.sentBody')}
                 </Text>
               </Row>
-              <Button label="Done" fullWidth onPress={onClose} />
+              <Button label={tr('common.done')} urdu={isUrdu} fullWidth onPress={onClose} />
             </Stack>
           ) : (
             <ScrollView contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.md }}>
               <View>
-                <Text variant="label" tone="label" style={{ marginBottom: 6 }}>FUNCTION</Text>
+                <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('booking.function')}</Text>
                 <ChipSelect options={EVENT_TYPES} value={eventType} onChange={setEventType} />
               </View>
               <Row gap="md">
                 <View style={{ flex: 1 }}>
-                  <Input label="Event date" placeholder="e.g. 15 Dec 2026" value={eventDate} onChangeText={setEventDate} />
+                  <Input label={tr('booking.eventDate')} urdu={isUrdu} placeholder="e.g. 15 Dec 2026" value={eventDate} onChangeText={setEventDate} />
                 </View>
               </Row>
               <View>
-                <Text variant="label" tone="label" style={{ marginBottom: 8 }}>GUESTS (approx.)</Text>
+                <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 8 }}>{tr('booking.guests')}</Text>
                 <Row gap="md" align="center">
                   <Pressable onPress={() => setGuests((g) => Math.max(10, g - 50))} style={stepBtn(t)}>
                     <Ionicons name="remove" size={20} color={t.colors.goldDark} />
@@ -151,25 +150,26 @@ export function BookingRequestModal({
               </View>
               {packageOptions.length > 0 ? (
                 <View>
-                  <Text variant="label" tone="label" style={{ marginBottom: 6 }}>PACKAGE (optional)</Text>
-                  <ChipSelect options={packageOptions} value={pkg} onChange={setPkg} allLabel="Any" />
+                  <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('booking.package')}</Text>
+                  <ChipSelect options={packageOptions} value={pkg} onChange={setPkg} allLabel={tr('booking.any')} />
                 </View>
               ) : null}
               <Divider />
-              <Input label="Your name" placeholder="Full name" value={name} onChangeText={setName} />
-              <Input label="Phone / WhatsApp" placeholder="03xx xxxxxxx" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+              <Input label={tr('booking.yourName')} urdu={isUrdu} placeholder="Full name" value={name} onChangeText={setName} />
+              <Input label={tr('booking.phone')} urdu={isUrdu} placeholder="03xx xxxxxxx" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
               <Input
-                label="Anything else? (optional)"
+                label={tr('booking.anythingElse')}
+                urdu={isUrdu}
                 placeholder="Special requests, other functions…"
                 value={message}
                 onChangeText={setMessage}
                 multiline
                 style={{ height: 72, textAlignVertical: 'top', paddingTop: 8 }}
               />
-              {error ? <Text variant="caption" tone="danger">{error}</Text> : null}
-              <Button label="Send booking request" icon="calendar-outline" fullWidth loading={submitting} onPress={submit} />
-              <Text variant="caption" tone="muted" align="center">
-                No payment now — the vendor confirms and you settle directly.
+              {error ? <Text variant="caption" tone="danger" urdu={isUrdu}>{error}</Text> : null}
+              <Button label={tr('booking.send')} urdu={isUrdu} icon="calendar-outline" fullWidth loading={submitting} onPress={submit} />
+              <Text variant="caption" tone="muted" align="center" urdu={isUrdu}>
+                {tr('booking.noPayment')}
               </Text>
             </ScrollView>
           )}

@@ -13,6 +13,9 @@ import {
   vendorPrimaryImage,
 } from '@/features/vendors/vendor-display';
 import type { Vendor } from '@/features/vendors/vendors.types';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { getBusinessById } from '@/lib/api/endpoints/vendors';
 import { useCompareStore } from '@/store/compare';
 import { useTheme } from '@/theme';
@@ -21,18 +24,19 @@ const ROW_H = 52;
 const COL_W = 156;
 const LABEL_W = 108;
 
-const ROWS: { label: string; get: (v: Vendor) => string }[] = [
-  { label: 'Type', get: (v) => vendorCategoryLabel(v) },
-  { label: 'City', get: (v) => v.city ?? v.vendor?.city ?? '—' },
-  { label: 'Rating', get: (v) => (v.reviewCount > 0 ? `${v.rating.toFixed(1)} (${v.reviewCount})` : 'New') },
-  { label: 'Starting price', get: (v) => vendorPriceLabel(v).text },
-  { label: 'Capacity', get: (v) => (v.maxCapacity ? `${v.maxCapacity} guests` : '—') },
-  { label: 'Verified', get: (v) => (isVerified(v) ? 'Yes' : 'No') },
-  { label: 'Reliability', get: (v) => v.reliability?.tier ?? '—' },
+const ROWS: { labelKey: StringKey; get: (v: Vendor) => string }[] = [
+  { labelKey: 'compare.type', get: (v) => vendorCategoryLabel(v) },
+  { labelKey: 'compare.city', get: (v) => v.city ?? v.vendor?.city ?? '—' },
+  { labelKey: 'compare.rating', get: (v) => (v.reviewCount > 0 ? `${v.rating.toFixed(1)} (${v.reviewCount})` : 'New') },
+  { labelKey: 'compare.startingPrice', get: (v) => vendorPriceLabel(v).text },
+  { labelKey: 'compare.capacity', get: (v) => (v.maxCapacity ? `${v.maxCapacity} guests` : '—') },
+  { labelKey: 'compare.verified', get: (v) => (isVerified(v) ? 'Yes' : 'No') },
+  { labelKey: 'compare.reliability', get: (v) => v.reliability?.tier ?? '—' },
 ];
 
 export default function Compare() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const ids = useCompareStore((s) => s.ids);
   const remove = useCompareStore((s) => s.remove);
@@ -48,16 +52,17 @@ export default function Compare() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">Compare</Text>
+        <T k="compare.title" variant="h1" />
       </Row>
 
       {vendors.length < 2 ? (
         <EmptyState
           icon="git-compare-outline"
-          title="Add vendors to compare"
-          message="Tap the compare icon on any vendor card to line them up side by side (up to 4)."
-          actionLabel="Explore vendors"
+          title={tr('compare.emptyTitle')}
+          message={tr('compare.emptySub')}
+          actionLabel={tr('common.exploreVendors')}
           onAction={() => router.push('/explore')}
+          urdu={isUrdu}
         />
       ) : (
         <ScrollView contentContainerStyle={{ padding: t.spacing.lg }}>
@@ -66,10 +71,8 @@ export default function Compare() {
             <View style={{ width: LABEL_W }}>
               <View style={{ height: 150 }} />
               {ROWS.map((r) => (
-                <View key={r.label} style={{ height: ROW_H, justifyContent: 'center' }}>
-                  <Text variant="overline" tone="label">
-                    {r.label.toUpperCase()}
-                  </Text>
+                <View key={r.labelKey} style={{ height: ROW_H, justifyContent: 'center' }}>
+                  <T k={r.labelKey} variant="overline" tone="label" />
                 </View>
               ))}
             </View>
@@ -105,14 +108,14 @@ export default function Compare() {
                       </View>
                       {/* Values */}
                       {ROWS.map((r) => (
-                        <View key={r.label} style={{ height: ROW_H, justifyContent: 'center', borderTopWidth: 1, borderTopColor: t.colors.border }}>
+                        <View key={r.labelKey} style={{ height: ROW_H, justifyContent: 'center', borderTopWidth: 1, borderTopColor: t.colors.border }}>
                           <Text variant="caption" tone="body" numberOfLines={2}>
                             {r.get(v)}
                           </Text>
                         </View>
                       ))}
                       <Pressable onPress={() => router.push(`/vendor/${v.id}`)} style={{ marginTop: 8 }}>
-                        <Badge label="View profile" tone="gold" icon="arrow-forward" />
+                        <Badge label={tr('compare.viewProfile')} urdu={isUrdu} tone="gold" icon="arrow-forward" />
                       </Pressable>
                     </View>
                   );

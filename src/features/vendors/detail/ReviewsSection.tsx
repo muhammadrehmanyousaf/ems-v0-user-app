@@ -6,6 +6,7 @@ import { ScrollView, View } from 'react-native';
 import { Divider, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
 import { useVendorReviews } from '@/features/vendors/vendors.queries';
 import type { Review } from '@/features/vendors/vendors.types';
+import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 
 function str(v: unknown): string | null {
@@ -50,11 +51,12 @@ export function ReviewsSection({
   reviewCount: number;
 }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const q = useVendorReviews(vendorId);
   const reviews = q.data ?? [];
 
   return (
-    <Section title="REVIEWS">
+    <Section title={tr('detail.reviews')} urdu={isUrdu}>
       {reviewCount > 0 ? (
         <Row gap="md" style={{ marginBottom: t.spacing.sm }}>
           <Text variant="display" tone="gold">
@@ -62,8 +64,8 @@ export function ReviewsSection({
           </Text>
           <Stack gap="xxs">
             <Stars value={rating} size={16} />
-            <Text variant="caption" tone="muted">
-              {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+            <Text variant="caption" tone="muted" urdu={isUrdu}>
+              {reviewCount} {tr('detail.reviewsCount')}
             </Text>
           </Stack>
         </Row>
@@ -75,8 +77,8 @@ export function ReviewsSection({
           <Skeleton height={12} width="90%" />
         </Stack>
       ) : reviews.length === 0 ? (
-        <Text variant="body" tone="muted">
-          No reviews yet — be the first to review after your event.
+        <Text variant="body" tone="muted" urdu={isUrdu}>
+          {tr('detail.noReviews')}
         </Text>
       ) : (
         <Stack gap="md">

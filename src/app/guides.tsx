@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, Divider, Row, Section, Text } from '@/components/ui';
 import { GUIDE_GROUPS, WEB_BASE } from '@/features/guides/guides';
+import { T } from '@/i18n/T';
 import { haptics, useTheme } from '@/theme';
 
 export default function Guides() {
@@ -27,16 +28,14 @@ export default function Guides() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">Wedding guides</Text>
+        <T k="guides.title" variant="h1" />
       </Row>
 
       <ScrollView
         contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.xl, paddingBottom: t.spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
-        <Text variant="body" tone="muted">
-          Everything you need to plan your shaadi — from costs to rasms.
-        </Text>
+        <T k="guides.subtitle" variant="body" tone="muted" />
         {GUIDE_GROUPS.map((group) => (
           <Section key={group.title} title={group.title.toUpperCase()}>
             <Card padded={false}>

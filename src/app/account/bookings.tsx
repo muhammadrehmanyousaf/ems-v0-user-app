@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, type BadgeTone, Card, EmptyState, Row, Skeleton, Stack, Text } from '@/components/ui';
 import { useMyBookings } from '@/features/account/account.queries';
 import { formatRs } from '@/features/vendors/vendor-display';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import type { Booking } from '@/lib/api/endpoints/account';
 import { useAuthStore } from '@/store/auth';
 import { useTheme } from '@/theme';
@@ -28,6 +30,7 @@ function bookingDate(b: Booking): string | null {
 
 export default function Bookings() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const authed = useAuthStore((s) => s.status === 'authenticated');
   const q = useMyBookings();
@@ -38,17 +41,17 @@ export default function Bookings() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">My bookings</Text>
+        <T k="bookings.title" variant="h1" />
       </Row>
 
       {!authed ? (
-        <EmptyState icon="lock-closed-outline" title="Sign in to see bookings" message="Your bookings appear here once you sign in." actionLabel="Sign in" onAction={() => router.push('/auth/login')} />
+        <EmptyState icon="lock-closed-outline" title={tr('bookings.signInTitle')} message={tr('bookings.signInSub')} actionLabel={tr('common.signIn')} onAction={() => router.push('/auth/login')} urdu={isUrdu} />
       ) : q.isLoading ? (
         <View style={{ padding: t.spacing.lg, gap: t.spacing.md }}>
           {[0, 1].map((i) => <Skeleton key={i} height={88} radius={8} />)}
         </View>
       ) : q.isError ? (
-        <EmptyState icon="cloud-offline-outline" title="Couldn’t load bookings" actionLabel="Retry" onAction={() => q.refetch()} />
+        <EmptyState icon="cloud-offline-outline" title={tr('bookings.loadError')} actionLabel={tr('common.retry')} onAction={() => q.refetch()} urdu={isUrdu} />
       ) : (
         <FlatList
           data={q.data ?? []}
@@ -77,10 +80,11 @@ export default function Bookings() {
           ListEmptyComponent={
             <EmptyState
               icon="calendar-outline"
-              title="No bookings yet"
-              message="When you book a vendor, it’ll show up here. Start by exploring."
-              actionLabel="Explore vendors"
+              title={tr('bookings.emptyTitle')}
+              message={tr('bookings.emptySub')}
+              actionLabel={tr('common.exploreVendors')}
               onAction={() => router.push('/explore')}
+              urdu={isUrdu}
             />
           }
         />

@@ -20,10 +20,13 @@ import {
 import { BROWSABLE_CATEGORIES } from '@/features/vendors/categories';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
 import { formatRs } from '@/features/vendors/vendor-display';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 
 export default function Explore() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string; city?: string }>();
   const [category, setCategory] = useState<string | null>(params.category ?? null);
@@ -46,20 +49,20 @@ export default function Explore() {
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen, paddingTop: insets.top }}>
       <View style={{ paddingHorizontal: t.spacing.lg, paddingTop: t.spacing.sm, gap: t.spacing.md }}>
-        <Text variant="h1">Explore</Text>
+        <T k="explore.title" variant="h1" />
         <Input
           icon="search-outline"
-          placeholder="Search vendors, cities…"
+          placeholder={tr('explore.searchPlaceholder')}
           value={search}
           onChangeText={setSearch}
           onClear={() => setSearch('')}
           autoCorrect={false}
         />
-        <ChipSelect options={categoryOptions} value={category} onChange={setCategory} allLabel="All" />
+        <ChipSelect options={categoryOptions} value={category} onChange={setCategory} allLabel={tr('common.all')} />
         <Row justify="space-between">
           {!data.isLoading ? (
-            <Text variant="caption" tone="muted">
-              {count.toLocaleString('en-PK')} {count === 1 ? 'vendor' : 'vendors'}
+            <Text variant="caption" tone="muted" urdu={isUrdu}>
+              {count.toLocaleString('en-PK')} {tr('explore.vendorsCount')}
             </Text>
           ) : (
             <View />
@@ -67,8 +70,8 @@ export default function Explore() {
           <Pressable onPress={() => setFilterOpen(true)} hitSlop={8}>
             <Row gap="xs">
               <Ionicons name="options-outline" size={16} color={t.colors.goldDark} />
-              <Text variant="label" tone="gold">
-                Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              <Text variant="label" tone="gold" urdu={isUrdu}>
+                {tr('explore.filters')}{activeCount > 0 ? ` (${activeCount})` : ''}
               </Text>
             </Row>
           </Pressable>
@@ -86,7 +89,7 @@ export default function Explore() {
             {filters.amenities.map((a) => (
               <Chip key={a} label={a} selected onPress={() => setFilters({ ...filters, amenities: filters.amenities.filter((x) => x !== a) })} />
             ))}
-            <Chip label="Clear all" onPress={() => setFilters({ ...DEFAULT_FILTERS })} />
+            <Chip label={tr('common.clearAll')} onPress={() => setFilters({ ...DEFAULT_FILTERS })} />
           </ScrollView>
         ) : null}
       </View>
@@ -96,7 +99,7 @@ export default function Explore() {
           {fullMode ? (
             <Row gap="sm" justify="center" style={{ paddingVertical: t.spacing.lg }}>
               <ActivityIndicator color={t.colors.primary} />
-              <Text variant="caption" tone="muted">Loading all matching vendors…</Text>
+              <T k="explore.loadingAll" variant="caption" tone="muted" />
             </Row>
           ) : (
             [0, 1, 2].map((i) => (
@@ -111,10 +114,11 @@ export default function Explore() {
       ) : data.isError ? (
         <EmptyState
           icon="cloud-offline-outline"
-          title="Couldn’t load vendors"
-          message="Check your connection and try again."
-          actionLabel="Retry"
+          title={tr('explore.loadError')}
+          message={tr('explore.loadErrorSub')}
+          actionLabel={tr('common.retry')}
           onAction={data.refetch}
+          urdu={isUrdu}
         />
       ) : (
         <FlatList
@@ -131,8 +135,9 @@ export default function Explore() {
           ListEmptyComponent={
             <EmptyState
               icon="search-outline"
-              title="No vendors match"
-              message="Try widening your budget, clearing a filter, or a different category."
+              title={tr('explore.noMatch')}
+              message={tr('explore.noMatchSub')}
+              urdu={isUrdu}
             />
           }
           ListFooterComponent={
