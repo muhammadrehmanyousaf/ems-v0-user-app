@@ -2,6 +2,7 @@
   "expo": {
     "name": "Wedding Wala",
     "slug": "weddingwala-app",
+    "owner": "muhammadrehman1234567890s-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a9dc34a6-6474-4dc6-8ff0-f27cd2201689"
+      }
     }
   }
 }
