@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { Badge, Card, Chip, Row, Section, Stack, Text } from '@/components/ui';
+import { HowItWorks } from '@/features/home/HowItWorks';
 import { FEATURED_CITIES } from '@/features/vendors/cities';
 import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
 import { RecentlyViewedRail } from '@/features/vendors/components/RecentlyViewedRail';
@@ -100,6 +101,9 @@ export default function Home() {
 
         <VendorShowcase slug="wedding-venues" title="Featured venues" />
         <VendorShowcase slug="wedding-photographers" title="Top photographers" />
+
+        <HowItWorks />
+
         <VendorShowcase slug="caterers" title="Caterers" />
         <VendorShowcase slug="bridal-makeup-artists" title="Bridal makeup" />
 
