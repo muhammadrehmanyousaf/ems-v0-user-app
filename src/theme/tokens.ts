@@ -141,8 +141,43 @@ export const elevation = {
     shadowOffset: { width: 0, height: 12 },
     elevation: 12,
   },
+  // Champagne glow — for the primary CTA & "featured" moments (gold, not grey).
+  glow: {
+    shadowColor: '#C9956A',
+    shadowOpacity: 0.45,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+  },
 } as const;
 export type Elevation = keyof typeof elevation;
+
+/**
+ * Gold accent hierarchy — tints/opacities of the PRIMARY champagne gold only
+ * (rgb 201,149,106). Stays strictly within the web palette; gold is an accent,
+ * never a large fill. Use for pills, rims, hover washes, glow.
+ */
+export const goldScale = {
+  bright: palette.goldLight, //  #E8C99A shimmer highlight
+  subtle: 'rgba(201, 149, 106, 0.12)', // pill / tint background
+  dim: 'rgba(201, 149, 106, 0.06)', // faint hover wash
+  hairline: 'rgba(201, 149, 106, 0.35)', // gold rim on cards / arch
+} as const;
+
+/**
+ * Gradient recipes (colour arrays for expo-linear-gradient). Every stop is a
+ * bridal-palette colour or an alpha of one — no new hues, no darkening the
+ * theme. Imagery + these washes carry the richness.
+ */
+export const gradients = {
+  ivoryWash: ['#FFFDFB', '#FDF8F2', '#FBF1E6'], // warm section background
+  roseWash: ['#FFF0F3', '#FDF8F2'], // romantic soft wash
+  champagne: ['rgba(232,201,154,0)', 'rgba(232,201,154,0.55)', 'rgba(232,201,154,0)'], // headline light-sweep
+  photoScrim: ['rgba(44,24,16,0)', 'rgba(44,24,16,0.10)', 'rgba(44,24,16,0.62)'], // bottom scrim for text-over-image
+  topScrim: ['rgba(44,24,16,0.35)', 'rgba(44,24,16,0)'], // top scrim for status-bar legibility
+  goldCta: ['#D6A473', '#C9956A', '#B37E4F'], // primary CTA sheen
+} as const;
+export type GradientName = keyof typeof gradients;
 
 export type MoneyDirection = 'in' | 'out' | 'neutral';
 /** Money-colour rule: money-in = success/green; owed/out = danger/red. */
@@ -152,5 +187,5 @@ export function moneyTone(direction: MoneyDirection): string {
   return colors.textBody;
 }
 
-export const tokens = { palette, colors, spacing, radius, elevation, moneyTone } as const;
+export const tokens = { palette, colors, spacing, radius, elevation, goldScale, gradients, moneyTone } as const;
 export type Tokens = typeof tokens;

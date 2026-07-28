@@ -8,6 +8,7 @@ export const duration = {
   base: 250,
   slow: 360, // web fade-up
   slower: 500,
+  hero: 820, // cinematic reveals & the champagne light-sweep (Headspace-slow, intentional)
 } as const;
 
 export const easing = {
@@ -24,6 +25,8 @@ export const stagger = 60;
 export const SPRING = {
   press: { mass: 0.6, damping: 18, stiffness: 260 },
   gentle: { mass: 1, damping: 20, stiffness: 160 },
+  soft: { mass: 1, damping: 26, stiffness: 180 }, // sheet snap / card settle (no overshoot)
+  bouncy: { mass: 0.8, damping: 12, stiffness: 220 }, // heart / celebratory pop (peak moments only)
 } as const;
 
 export const motion = { duration, easing, stagger, SPRING } as const;
