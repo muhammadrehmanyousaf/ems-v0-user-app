@@ -33,6 +33,22 @@ export const STRINGS = {
   'account.editProfile': { en: 'Edit profile', ur: 'پروفائل میں ترمیم' },
   'account.language': { en: 'LANGUAGE', ur: 'زبان' },
   'account.tagline': { en: "Wedding Wala — Pakistan's #1 shaadi platform.", ur: 'ویڈنگ والا — پاکستان کا نمبر ۱ شادی پلیٹ فارم۔' },
+  // Account / settings hub
+  'acct.activity': { en: 'MY ACTIVITY', ur: 'میری سرگرمی' },
+  'acct.planning': { en: 'PLANNING', ur: 'منصوبہ بندی' },
+  'acct.preferences': { en: 'PREFERENCES', ur: 'ترجیحات' },
+  'acct.support': { en: 'SUPPORT', ur: 'معاونت' },
+  'acct.about': { en: 'ABOUT', ur: 'تعارف' },
+  'acct.notifications': { en: 'Notifications', ur: 'اطلاعات' },
+  'acct.currency': { en: 'Currency', ur: 'کرنسی' },
+  'acct.help': { en: 'Help & guides', ur: 'مدد اور گائیڈز' },
+  'acct.contact': { en: 'Contact us', ur: 'ہم سے رابطہ' },
+  'acct.share': { en: 'Share Wedding Wala', ur: 'ویڈنگ والا شیئر کریں' },
+  'acct.rate': { en: 'Rate the app', ur: 'ایپ کو ریٹ کریں' },
+  'acct.aboutWW': { en: 'About Wedding Wala', ur: 'ویڈنگ والا کے بارے میں' },
+  'acct.terms': { en: 'Terms of use', ur: 'شرائطِ استعمال' },
+  'acct.privacy': { en: 'Privacy policy', ur: 'رازداری پالیسی' },
+  'acct.version': { en: 'Version', ur: 'ورژن' },
 
   // Plan
   'plan.title': { en: 'Plan your shaadi', ur: 'اپنی شادی کی منصوبہ بندی' },
