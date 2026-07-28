@@ -9,6 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, Button, Card, Chip, EmptyState, Rating, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
 import { InquiryModal } from '@/features/vendors/components/InquiryModal';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
+import { AvailabilityCalendar } from '@/features/vendors/detail/AvailabilityCalendar';
+import { ReviewsSection } from '@/features/vendors/detail/ReviewsSection';
 import {
   formatRs,
   isVerified,
@@ -226,6 +228,12 @@ export default function VendorDetail() {
               </ScrollView>
             </Section>
           ) : null}
+
+          {/* Reviews */}
+          <ReviewsSection vendorId={vendor.id} rating={vendor.rating} reviewCount={vendor.reviewCount} />
+
+          {/* Availability */}
+          <AvailabilityCalendar vendorId={vendor.id} />
         </Stack>
 
         {/* Related */}

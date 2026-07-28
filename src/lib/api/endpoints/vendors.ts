@@ -89,6 +89,22 @@ export async function getPlatformStats(): Promise<PlatformStats> {
   return api.get<PlatformStats>('/platform-stats');
 }
 
+/** Busy/blackout dates for a business in a month. Empty map = fully open. */
+export async function getAvailability(
+  id: number | string,
+  month: string,
+): Promise<Record<string, unknown>> {
+  try {
+    const res = await api.get<{ availability?: Record<string, Record<string, unknown>> }>(
+      '/bookings/availability',
+      { params: { businessIds: id, month } },
+    );
+    return res.availability?.[String(id)] ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export interface InquiryPayload {
   businessId: number;
   name?: string;

@@ -1,13 +1,23 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChipSelect, EmptyState, Input, Skeleton, Text } from '@/components/ui';
+import { ChipSelect, EmptyState, Input, Row, Skeleton, Text } from '@/components/ui';
+import { CompareBar } from '@/features/compare/CompareBar';
+import { FilterSheet } from '@/features/explore/FilterSheet';
+import { useExploreVendors } from '@/features/explore/useExploreVendors';
+import {
+  DEFAULT_FILTERS,
+  applyVendorFilters,
+  countActiveFilters,
+  deriveFacets,
+  hasActiveFilters,
+  type ExploreFilters,
+} from '@/features/explore/vendor-filter';
 import { BROWSABLE_CATEGORIES } from '@/features/vendors/categories';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
-import { vendorLocation } from '@/features/vendors/vendor-display';
-import { useVendorsInfinite } from '@/features/vendors/vendors.queries';
 import { useTheme } from '@/theme';
 
 export default function Explore() {
@@ -16,23 +26,20 @@ export default function Explore() {
   const params = useLocalSearchParams<{ category?: string }>();
   const [category, setCategory] = useState<string | null>(params.category ?? null);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ExploreFilters>({ ...DEFAULT_FILTERS });
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const q = useVendorsInfinite({ categorySlug: category });
-  const allVendors = useMemo(() => (q.data?.pages ?? []).flatMap((p) => p.vendors), [q.data]);
+  const fullMode = hasActiveFilters(filters) || search.trim().length > 0;
+  const data = useExploreVendors(category, fullMode);
 
-  const vendors = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return allVendors;
-    return allVendors.filter(
-      (v) =>
-        v.name.toLowerCase().includes(s) ||
-        vendorLocation(v).toLowerCase().includes(s) ||
-        (v.vendor?.vendorType ?? '').toLowerCase().includes(s),
-    );
-  }, [allVendors, search]);
-
+  const displayed = useMemo(
+    () => (fullMode ? applyVendorFilters(data.vendors, filters, search) : data.vendors),
+    [fullMode, data.vendors, filters, search],
+  );
+  const facets = useMemo(() => deriveFacets(data.vendors), [data.vendors]);
+  const activeCount = countActiveFilters(filters);
   const categoryOptions = BROWSABLE_CATEGORIES.map((c) => ({ value: c.slug, label: c.singular }));
-  const total = q.data?.pages?.[0]?.total ?? 0;
+  const count = fullMode ? displayed.length : data.total;
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen, paddingTop: insets.top }}>
@@ -47,51 +54,70 @@ export default function Explore() {
           autoCorrect={false}
         />
         <ChipSelect options={categoryOptions} value={category} onChange={setCategory} allLabel="All" />
-        {!q.isLoading ? (
-          <Text variant="caption" tone="muted">
-            {search ? `${vendors.length} match${vendors.length === 1 ? '' : 'es'}` : `${total.toLocaleString('en-PK')} vendors`}
-          </Text>
-        ) : null}
+        <Row justify="space-between">
+          {!data.isLoading ? (
+            <Text variant="caption" tone="muted">
+              {count.toLocaleString('en-PK')} {count === 1 ? 'vendor' : 'vendors'}
+            </Text>
+          ) : (
+            <View />
+          )}
+          <Pressable onPress={() => setFilterOpen(true)} hitSlop={8}>
+            <Row gap="xs">
+              <Ionicons name="options-outline" size={16} color={t.colors.goldDark} />
+              <Text variant="label" tone="gold">
+                Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              </Text>
+            </Row>
+          </Pressable>
+        </Row>
       </View>
 
-      {q.isLoading ? (
+      {data.isLoading ? (
         <View style={{ padding: t.spacing.lg, gap: t.spacing.lg }}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={{ gap: 8 }}>
-              <Skeleton height={170} radius={8} />
-              <Skeleton height={16} width="60%" />
-              <Skeleton height={12} width="40%" />
-            </View>
-          ))}
+          {fullMode ? (
+            <Row gap="sm" justify="center" style={{ paddingVertical: t.spacing.lg }}>
+              <ActivityIndicator color={t.colors.primary} />
+              <Text variant="caption" tone="muted">Loading all matching vendors…</Text>
+            </Row>
+          ) : (
+            [0, 1, 2].map((i) => (
+              <View key={i} style={{ gap: 8 }}>
+                <Skeleton height={170} radius={8} />
+                <Skeleton height={16} width="60%" />
+                <Skeleton height={12} width="40%" />
+              </View>
+            ))
+          )}
         </View>
-      ) : q.isError ? (
+      ) : data.isError ? (
         <EmptyState
           icon="cloud-offline-outline"
           title="Couldn’t load vendors"
           message="Check your connection and try again."
           actionLabel="Retry"
-          onAction={() => q.refetch()}
+          onAction={data.refetch}
         />
       ) : (
         <FlatList
-          data={vendors}
+          data={displayed}
           keyExtractor={(v) => String(v.id)}
           contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.lg, paddingBottom: t.spacing['3xl'] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <VendorCard vendor={item} />}
           onEndReachedThreshold={0.5}
           onEndReached={() => {
-            if (!search && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+            if (!fullMode) data.loadMore();
           }}
           ListEmptyComponent={
             <EmptyState
               icon="search-outline"
-              title="No vendors found"
-              message="Try a different category or search term."
+              title="No vendors match"
+              message="Try widening your budget, clearing a filter, or a different category."
             />
           }
           ListFooterComponent={
-            q.isFetchingNextPage ? (
+            data.isFetchingMore ? (
               <View style={{ paddingVertical: t.spacing.lg }}>
                 <ActivityIndicator color={t.colors.primary} />
               </View>
@@ -99,6 +125,16 @@ export default function Explore() {
           }
         />
       )}
+
+      <CompareBar />
+
+      <FilterSheet
+        visible={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        value={filters}
+        onApply={setFilters}
+        facets={facets}
+      />
     </View>
   );
 }

@@ -2,6 +2,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import {
+  getAvailability,
   getBusinessById,
   getPlatformStats,
   getRelatedBusinesses,
@@ -69,6 +70,15 @@ export function useVendorReviews(id: number | string) {
   return useQuery({
     queryKey: ['vendor', String(id), 'reviews'],
     queryFn: () => getReviews(id),
+    enabled: id != null && id !== '',
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useVendorAvailability(id: number | string, month: string) {
+  return useQuery({
+    queryKey: ['vendor', String(id), 'availability', month],
+    queryFn: () => getAvailability(id, month),
     enabled: id != null && id !== '',
     staleTime: 5 * 60 * 1000,
   });

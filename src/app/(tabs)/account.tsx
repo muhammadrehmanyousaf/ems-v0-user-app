@@ -1,10 +1,44 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Badge, Button, Card, ChipSelect, Divider, Row, Screen, Stack, Text } from '@/components/ui';
 import { useAuthStore } from '@/store/auth';
 import { useLocaleStore } from '@/store/locale';
 import { useTheme } from '@/theme';
+
+function AccountRow({
+  icon,
+  label,
+  onPress,
+  last,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  last?: boolean;
+}) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 14,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: t.colors.border,
+      }}
+    >
+      <Ionicons name={icon} size={20} color={t.colors.goldDark} />
+      <Text variant="body" tone="body" style={{ flex: 1 }}>
+        {label}
+      </Text>
+      <Ionicons name="chevron-forward" size={18} color={t.colors.textMuted} />
+    </Pressable>
+  );
+}
 
 export default function Account() {
   const t = useTheme();
@@ -45,6 +79,12 @@ export default function Account() {
             )}
           </View>
         </Card>
+
+        <Stack gap="none">
+          <AccountRow icon="heart-outline" label="Saved vendors" onPress={() => router.push('/favorites')} />
+          <AccountRow icon="git-compare-outline" label="Compare vendors" onPress={() => router.push('/compare')} />
+          <AccountRow icon="search-outline" label="Explore vendors" onPress={() => router.push('/explore')} last />
+        </Stack>
 
         <Stack gap="sm">
           <Text variant="overline" tone="label">

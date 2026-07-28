@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Badge, Card, Row, Text } from '@/components/ui';
+import { COMPARE_MAX, useCompareStore } from '@/store/compare';
 import { useFavoritesStore } from '@/store/favorites';
 import { haptics, useTheme } from '@/theme';
 
@@ -19,6 +20,9 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
   const t = useTheme();
   const isFav = useFavoritesStore((s) => s.ids.has(vendor.id));
   const toggleFav = useFavoritesStore((s) => s.toggle);
+  const inCompare = useCompareStore((s) => s.ids.includes(vendor.id));
+  const compareFull = useCompareStore((s) => s.ids.length >= COMPARE_MAX);
+  const toggleCompare = useCompareStore((s) => s.toggle);
 
   const image = vendorPrimaryImage(vendor);
   const price = vendorPriceLabel(vendor);
@@ -68,6 +72,24 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
             color={isFav ? t.colors.danger : t.colors.textSoft}
           />
         </Pressable>
+
+        {/* Compare toggle */}
+        {inCompare || !compareFull ? (
+          <Pressable
+            hitSlop={10}
+            onPress={() => {
+              haptics.selection();
+              toggleCompare(vendor.id);
+            }}
+            style={[styles.compare, { backgroundColor: inCompare ? t.colors.gold : 'rgba(253,248,242,0.92)' }]}
+          >
+            <Ionicons
+              name="git-compare-outline"
+              size={18}
+              color={inCompare ? t.colors.onPrimary : t.colors.textSoft}
+            />
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Body */}
@@ -132,6 +154,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compare: {
+    position: 'absolute',
+    top: 8,
+    right: 50,
     width: 34,
     height: 34,
     borderRadius: 17,
