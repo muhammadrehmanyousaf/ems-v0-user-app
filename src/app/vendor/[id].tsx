@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ import {
 } from '@/features/vendors/vendor-display';
 import { useRelatedVendors, useVendor } from '@/features/vendors/vendors.queries';
 import { useFavoritesStore } from '@/store/favorites';
+import { useRecentlyViewedStore } from '@/store/recently-viewed';
 import { haptics, useTheme } from '@/theme';
 import { telLink, waLink } from '@/utils/contact';
 
@@ -37,7 +38,12 @@ export default function VendorDetail() {
   const related = useRelatedVendors(id);
   const isFav = useFavoritesStore((s) => (id ? s.ids.has(Number(id)) : false));
   const toggleFav = useFavoritesStore((s) => s.toggle);
+  const recordView = useRecentlyViewedStore((s) => s.record);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) recordView(Number(id));
+  }, [id, recordView]);
 
   const vendor = q.data ?? null;
 

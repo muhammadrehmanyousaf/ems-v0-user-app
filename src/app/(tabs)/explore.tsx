@@ -1,15 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChipSelect, EmptyState, Input, Row, Skeleton, Text } from '@/components/ui';
+import { Chip, ChipSelect, EmptyState, Input, Row, Skeleton, Text } from '@/components/ui';
 import { CompareBar } from '@/features/compare/CompareBar';
 import { FilterSheet } from '@/features/explore/FilterSheet';
 import { useExploreVendors } from '@/features/explore/useExploreVendors';
 import {
   DEFAULT_FILTERS,
+  PRICE_MAX,
   applyVendorFilters,
   countActiveFilters,
   deriveFacets,
@@ -18,6 +19,7 @@ import {
 } from '@/features/explore/vendor-filter';
 import { BROWSABLE_CATEGORIES } from '@/features/vendors/categories';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
+import { formatRs } from '@/features/vendors/vendor-display';
 import { useTheme } from '@/theme';
 
 export default function Explore() {
@@ -71,6 +73,22 @@ export default function Explore() {
             </Row>
           </Pressable>
         </Row>
+
+        {hasActiveFilters(filters) ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: t.spacing.sm }}>
+            {filters.city ? <Chip label={filters.city} selected onPress={() => setFilters({ ...filters, city: null })} /> : null}
+            {filters.maxPrice < PRICE_MAX ? <Chip label={`≤ ${formatRs(filters.maxPrice)}`} selected onPress={() => setFilters({ ...filters, maxPrice: PRICE_MAX })} /> : null}
+            {filters.minRating > 0 ? <Chip label={`${filters.minRating}★+`} selected onPress={() => setFilters({ ...filters, minRating: 0 })} /> : null}
+            {filters.verifiedOnly ? <Chip label="Verified" selected onPress={() => setFilters({ ...filters, verifiedOnly: false })} /> : null}
+            {filters.featuredOnly ? <Chip label="Featured" selected onPress={() => setFilters({ ...filters, featuredOnly: false })} /> : null}
+            {filters.availableOnly ? <Chip label="Available" selected onPress={() => setFilters({ ...filters, availableOnly: false })} /> : null}
+            {filters.minCapacity > 0 ? <Chip label={`${filters.minCapacity}+ guests`} selected onPress={() => setFilters({ ...filters, minCapacity: 0 })} /> : null}
+            {filters.amenities.map((a) => (
+              <Chip key={a} label={a} selected onPress={() => setFilters({ ...filters, amenities: filters.amenities.filter((x) => x !== a) })} />
+            ))}
+            <Chip label="Clear all" onPress={() => setFilters({ ...DEFAULT_FILTERS })} />
+          </ScrollView>
+        ) : null}
       </View>
 
       {data.isLoading ? (
@@ -105,6 +123,7 @@ export default function Explore() {
           contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.lg, paddingBottom: t.spacing['3xl'] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <VendorCard vendor={item} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={data.refetch} tintColor={t.colors.primary} />}
           onEndReachedThreshold={0.5}
           onEndReached={() => {
             if (!fullMode) data.loadMore();

@@ -10,6 +10,7 @@ import { queryClient } from '@/lib/query/queryClient';
 import { useAuthStore } from '@/store/auth';
 import { useFavoritesStore } from '@/store/favorites';
 import { useLocaleStore } from '@/store/locale';
+import { useRecentlyViewedStore } from '@/store/recently-viewed';
 import { ThemeProvider, useAppFonts, colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +23,7 @@ export default function RootLayout() {
     void useAuthStore.getState().hydrate();
     void useLocaleStore.getState().hydrate();
     void useFavoritesStore.getState().hydrate();
+    void useRecentlyViewedStore.getState().hydrate();
   }, []);
 
   useEffect(() => {

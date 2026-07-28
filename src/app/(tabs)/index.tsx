@@ -5,6 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Badge, Card, Chip, Row, Section, Stack, Text } from '@/components/ui';
 import { FEATURED_CITIES } from '@/features/vendors/cities';
 import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
+import { RecentlyViewedRail } from '@/features/vendors/components/RecentlyViewedRail';
 import { VendorShowcase } from '@/features/vendors/components/VendorShowcase';
 import { usePlatformStats } from '@/features/vendors/vendors.queries';
 import { useTheme } from '@/theme';
@@ -77,6 +78,8 @@ export default function Home() {
       </BridalWash>
 
       <Stack gap="xl" style={{ paddingVertical: 24 }}>
+        <RecentlyViewedRail />
+
         <View style={{ paddingHorizontal: 24 }}>
           <Section title="BROWSE BY CATEGORY">
             <CategoryGrid />
