@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Badge, Button, Card, Chip, EmptyState, Rating, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
@@ -44,6 +45,21 @@ export default function VendorDetail() {
   useEffect(() => {
     if (id) recordView(Number(id));
   }, [id, recordView]);
+
+  // Parallax hero: gentle zoom on pull-down, lag on scroll-up.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const heroStyle = useAnimatedStyle(() => {
+    const y = scrollY.value;
+    return {
+      transform: [
+        { translateY: y > 0 ? y * 0.4 : 0 },
+        { scale: y < 0 ? 1 + -y / 600 : 1 },
+      ],
+    };
+  });
 
   const vendor = q.data ?? null;
 
@@ -95,20 +111,27 @@ export default function VendorDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 96 }}>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         {/* Hero */}
-        <View style={{ height: 320, backgroundColor: t.colors.sand }}>
-          {hero ? (
-            <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.center]}>
-              <Ionicons name="image-outline" size={48} color={t.colors.textLabel} />
-            </View>
-          )}
-          <LinearGradient
-            colors={['rgba(44,24,16,0.45)', 'transparent', 'rgba(44,24,16,0.15)']}
-            style={StyleSheet.absoluteFill}
-          />
+        <View style={{ height: 320, backgroundColor: t.colors.sand, overflow: 'hidden' }}>
+          <Animated.View style={[StyleSheet.absoluteFill, heroStyle]}>
+            {hero ? (
+              <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.center]}>
+                <Ionicons name="image-outline" size={48} color={t.colors.textLabel} />
+              </View>
+            )}
+            <LinearGradient
+              colors={['rgba(44,24,16,0.45)', 'transparent', 'rgba(44,24,16,0.15)']}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
           <BackButton top={insets.top} />
           <Pressable
             onPress={() => {
@@ -257,7 +280,7 @@ export default function VendorDetail() {
             </ScrollView>
           </View>
         ) : null}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Sticky contact bar */}
       <View
