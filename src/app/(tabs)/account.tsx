@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { Badge, Button, Card, ChipSelect, Divider, Row, Screen, Stack, Text } from '@/components/ui';
+import { useProfile } from '@/features/account/account.queries';
 import { useAuthStore } from '@/store/auth';
 import { useLocaleStore } from '@/store/locale';
 import { useTheme } from '@/theme';
@@ -48,6 +49,11 @@ export default function Account() {
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const authed = status === 'authenticated';
+  const profile = useProfile();
+  const displayName = (profile.data?.fullName as string) ?? user?.name ?? (authed ? 'Your account' : 'Guest');
+  const subLine = authed
+    ? ((profile.data?.email as string) ?? user?.email ?? user?.phoneNumber ?? 'Your account')
+    : 'Sign in to save vendors & book';
 
   return (
     <Screen scroll padded>
@@ -58,11 +64,9 @@ export default function Account() {
       <Stack gap="lg">
         <Card>
           <Row justify="space-between">
-            <Stack gap="xxs">
-              <Text variant="title">{authed ? (user?.name ?? 'Signed in') : 'Guest'}</Text>
-              <Text variant="caption" tone="muted">
-                {authed ? (user?.phoneNumber ?? user?.email ?? 'Your account') : 'Sign in to save vendors & book'}
-              </Text>
+            <Stack gap="xxs" style={{ flex: 1 }}>
+              <Text variant="title" numberOfLines={1}>{displayName}</Text>
+              <Text variant="caption" tone="muted" numberOfLines={1}>{subLine}</Text>
             </Stack>
             <Badge label={authed ? 'Signed in' : 'Guest'} tone={authed ? 'success' : 'neutral'} />
           </Row>
@@ -79,6 +83,13 @@ export default function Account() {
             )}
           </View>
         </Card>
+
+        {authed ? (
+          <Stack gap="none">
+            <AccountRow icon="calendar-outline" label="My bookings" onPress={() => router.push('/account/bookings')} />
+            <AccountRow icon="person-outline" label="Edit profile" onPress={() => router.push('/account/profile')} last />
+          </Stack>
+        ) : null}
 
         <Stack gap="none">
           <AccountRow icon="heart-outline" label="Saved vendors" onPress={() => router.push('/favorites')} />
@@ -103,9 +114,8 @@ export default function Account() {
 
         <Divider />
 
-        <Button label="Design system (dev)" variant="ghost" icon="color-palette-outline" onPress={() => router.push('/dev')} />
         <Text variant="caption" tone="muted" align="center">
-          Full sign-in, bookings, payments &amp; settings arrive in Phase 3.
+          Wedding Wala — Pakistan&apos;s #1 shaadi platform.
         </Text>
       </Stack>
     </Screen>
