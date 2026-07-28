@@ -18,6 +18,7 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
   iconRight?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
   fullWidth?: boolean;
+  urdu?: boolean;
 }
 
 const HEIGHTS: Record<Size, number> = { sm: 38, md: 48, lg: 54 };
@@ -31,6 +32,7 @@ export function Button({
   loading,
   fullWidth,
   disabled,
+  urdu,
   onPress,
   ...rest
 }: ButtonProps) {
@@ -85,7 +87,7 @@ export function Button({
         ) : (
           <View style={styles.row}>
             {icon ? <Ionicons name={icon} size={size === 'sm' ? 16 : 18} color={contentColor} /> : null}
-            <Text variant="button" tone="inherit" style={{ color: contentColor }}>
+            <Text variant="button" tone="inherit" urdu={urdu} style={{ color: contentColor }}>
               {label}
             </Text>
             {iconRight ? <Ionicons name={iconRight} size={size === 'sm' ? 16 : 18} color={contentColor} /> : null}

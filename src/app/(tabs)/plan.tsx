@@ -15,6 +15,8 @@ import {
 } from '@/features/planning/types';
 import { useLocalList } from '@/features/planning/useLocalList';
 import { formatRs } from '@/features/vendors/vendor-display';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
 import { useFavoritesStore } from '@/store/favorites';
 import { useTheme } from '@/theme';
 
@@ -31,19 +33,19 @@ export default function Plan() {
   const checklistDone = checklist.items.filter((i) => i.completed).length;
   const guestHeads = guests.items.reduce((s, g) => s + (g.count || 1), 0);
 
-  const tools: { icon: keyof typeof Ionicons.glyphMap; title: string; stat: string; href: Href }[] = [
-    { icon: 'wallet-outline', title: 'Budget', stat: formatRs(budgetTotal), href: '/tools/budget' },
-    { icon: 'checkmark-done-outline', title: 'Checklist', stat: `${checklistDone}/${checklist.items.length} done`, href: '/tools/checklist' },
-    { icon: 'people-outline', title: 'Guest list', stat: `${guestHeads} guests`, href: '/tools/guests' },
-    { icon: 'time-outline', title: 'Timeline', stat: `${timeline.items.length} events`, href: '/tools/timeline' },
+  const tools: { icon: keyof typeof Ionicons.glyphMap; key: string; titleKey: StringKey; stat: string; href: Href }[] = [
+    { icon: 'wallet-outline', key: 'budget', titleKey: 'tool.budget', stat: formatRs(budgetTotal), href: '/tools/budget' },
+    { icon: 'checkmark-done-outline', key: 'checklist', titleKey: 'tool.checklist', stat: `${checklistDone}/${checklist.items.length} done`, href: '/tools/checklist' },
+    { icon: 'people-outline', key: 'guests', titleKey: 'tool.guests', stat: `${guestHeads} guests`, href: '/tools/guests' },
+    { icon: 'time-outline', key: 'timeline', titleKey: 'tool.timeline', stat: `${timeline.items.length} events`, href: '/tools/timeline' },
   ];
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.colors.screen }} showsVerticalScrollIndicator={false}>
       <View style={{ padding: t.spacing.lg, paddingTop: t.spacing.xl, gap: t.spacing.xl }}>
         <Stack gap="xxs">
-          <Text variant="display">Plan your shaadi</Text>
-          <Text variant="body" tone="muted">Everything for the big day, in one place.</Text>
+          <T k="plan.title" variant="display" />
+          <T k="plan.subtitle" variant="body" tone="muted" />
         </Stack>
 
         {/* Shortlist */}
@@ -54,7 +56,7 @@ export default function Plan() {
                 <Ionicons name="heart" size={22} color="#A34E60" />
               </View>
               <Stack gap="xxs">
-                <Text variant="title">Your shortlist</Text>
+                <T k="plan.shortlist" variant="title" />
                 <Text variant="caption" tone="muted">{savedCount} saved {savedCount === 1 ? 'vendor' : 'vendors'}</Text>
               </Stack>
             </Row>
@@ -65,14 +67,14 @@ export default function Plan() {
         <Section title="PLANNING TOOLS">
           <Stack gap="md">
             {tools.map((tool) => (
-              <Card key={tool.title} onPress={() => router.push(tool.href)}>
+              <Card key={tool.key} onPress={() => router.push(tool.href)}>
                 <Row justify="space-between">
                   <Row gap="md">
                     <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(201,149,106,0.14)', alignItems: 'center', justifyContent: 'center' }}>
                       <Ionicons name={tool.icon} size={22} color={t.colors.goldDark} />
                     </View>
                     <Stack gap="xxs">
-                      <Text variant="title">{tool.title}</Text>
+                      <T k={tool.titleKey} variant="title" />
                       <Text variant="caption" tone="gold">{tool.stat}</Text>
                     </Stack>
                   </Row>
@@ -83,9 +85,7 @@ export default function Plan() {
           </Stack>
         </Section>
 
-        <Text variant="caption" tone="muted" align="center">
-          Your plans are saved on this device.
-        </Text>
+        <T k="plan.savedNote" variant="caption" tone="muted" align="center" />
       </View>
     </ScrollView>
   );

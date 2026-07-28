@@ -4,18 +4,21 @@ import { Pressable, View } from 'react-native';
 
 import { Badge, Button, Card, ChipSelect, Divider, Row, Screen, Stack, Text } from '@/components/ui';
 import { useProfile } from '@/features/account/account.queries';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useAuthStore } from '@/store/auth';
 import { useLocaleStore } from '@/store/locale';
 import { useTheme } from '@/theme';
 
 function AccountRow({
   icon,
-  label,
+  labelKey,
   onPress,
   last,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
-  label: string;
+  labelKey: StringKey;
   onPress: () => void;
   last?: boolean;
 }) {
@@ -33,9 +36,7 @@ function AccountRow({
       }}
     >
       <Ionicons name={icon} size={20} color={t.colors.goldDark} />
-      <Text variant="body" tone="body" style={{ flex: 1 }}>
-        {label}
-      </Text>
+      <T k={labelKey} variant="body" tone="body" style={{ flex: 1 }} />
       <Ionicons name="chevron-forward" size={18} color={t.colors.textMuted} />
     </Pressable>
   );
@@ -43,6 +44,7 @@ function AccountRow({
 
 export default function Account() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const status = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
@@ -50,57 +52,56 @@ export default function Account() {
   const setLocale = useLocaleStore((s) => s.setLocale);
   const authed = status === 'authenticated';
   const profile = useProfile();
-  const displayName = (profile.data?.fullName as string) ?? user?.name ?? (authed ? 'Your account' : 'Guest');
-  const subLine = authed
-    ? ((profile.data?.email as string) ?? user?.email ?? user?.phoneNumber ?? 'Your account')
-    : 'Sign in to save vendors & book';
+  const displayName = (profile.data?.fullName as string) ?? user?.name ?? null;
+  const email = authed ? ((profile.data?.email as string) ?? user?.email ?? user?.phoneNumber) : null;
 
   return (
     <Screen scroll padded>
       <View style={{ paddingTop: t.spacing.sm, paddingBottom: t.spacing.lg }}>
-        <Text variant="h1">Account</Text>
+        <T k="account.title" variant="h1" />
       </View>
 
       <Stack gap="lg">
         <Card>
           <Row justify="space-between">
             <Stack gap="xxs" style={{ flex: 1 }}>
-              <Text variant="title" numberOfLines={1}>{displayName}</Text>
-              <Text variant="caption" tone="muted" numberOfLines={1}>{subLine}</Text>
+              {authed && displayName ? (
+                <Text variant="title" numberOfLines={1}>{displayName}</Text>
+              ) : (
+                <T k="account.guest" variant="title" />
+              )}
+              {authed && email ? (
+                <Text variant="caption" tone="muted" numberOfLines={1}>{email}</Text>
+              ) : (
+                <T k="account.signInPrompt" variant="caption" tone="muted" numberOfLines={2} />
+              )}
             </Stack>
-            <Badge label={authed ? 'Signed in' : 'Guest'} tone={authed ? 'success' : 'neutral'} />
+            <Badge label={authed ? tr('account.signedIn') : tr('account.guest')} tone={authed ? 'success' : 'neutral'} urdu={isUrdu} />
           </Row>
           <View style={{ marginTop: t.spacing.md }}>
             {authed ? (
-              <Button label="Sign out" variant="secondary" icon="log-out-outline" onPress={() => void signOut()} />
+              <Button label={tr('common.signOut')} urdu={isUrdu} variant="secondary" icon="log-out-outline" onPress={() => void signOut()} />
             ) : (
-              <Button
-                label="Sign in / Register"
-                icon="person-outline"
-                fullWidth
-                onPress={() => router.push('/auth/login')}
-              />
+              <Button label={tr('common.signInRegister')} urdu={isUrdu} icon="person-outline" fullWidth onPress={() => router.push('/auth/login')} />
             )}
           </View>
         </Card>
 
         {authed ? (
           <Stack gap="none">
-            <AccountRow icon="calendar-outline" label="My bookings" onPress={() => router.push('/account/bookings')} />
-            <AccountRow icon="person-outline" label="Edit profile" onPress={() => router.push('/account/profile')} last />
+            <AccountRow icon="calendar-outline" labelKey="account.myBookings" onPress={() => router.push('/account/bookings')} />
+            <AccountRow icon="person-outline" labelKey="account.editProfile" onPress={() => router.push('/account/profile')} last />
           </Stack>
         ) : null}
 
         <Stack gap="none">
-          <AccountRow icon="heart-outline" label="Saved vendors" onPress={() => router.push('/favorites')} />
-          <AccountRow icon="git-compare-outline" label="Compare vendors" onPress={() => router.push('/compare')} />
-          <AccountRow icon="search-outline" label="Explore vendors" onPress={() => router.push('/explore')} last />
+          <AccountRow icon="heart-outline" labelKey="common.savedVendors" onPress={() => router.push('/favorites')} />
+          <AccountRow icon="git-compare-outline" labelKey="common.compareVendors" onPress={() => router.push('/compare')} />
+          <AccountRow icon="search-outline" labelKey="common.exploreVendors" onPress={() => router.push('/explore')} last />
         </Stack>
 
         <Stack gap="sm">
-          <Text variant="overline" tone="label">
-            LANGUAGE
-          </Text>
+          <T k="account.language" variant="overline" tone="label" />
           <ChipSelect
             scroll={false}
             options={[
@@ -114,9 +115,7 @@ export default function Account() {
 
         <Divider />
 
-        <Text variant="caption" tone="muted" align="center">
-          Wedding Wala — Pakistan&apos;s #1 shaadi platform.
-        </Text>
+        <T k="account.tagline" variant="caption" tone="muted" align="center" />
       </Stack>
     </Screen>
   );

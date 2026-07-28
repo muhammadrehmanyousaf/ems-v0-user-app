@@ -12,9 +12,10 @@ export interface BadgeProps {
   label: string;
   tone?: BadgeTone;
   icon?: keyof typeof Ionicons.glyphMap;
+  urdu?: boolean;
 }
 
-export function Badge({ label, tone = 'gold', icon }: BadgeProps) {
+export function Badge({ label, tone = 'gold', icon, urdu }: BadgeProps) {
   const t = useTheme();
   const map: Record<BadgeTone, { bg: string; fg: string }> = {
     gold: { bg: 'rgba(201,149,106,0.16)', fg: t.colors.goldDark },
@@ -29,7 +30,7 @@ export function Badge({ label, tone = 'gold', icon }: BadgeProps) {
   return (
     <View style={[styles.badge, { backgroundColor: c.bg, borderRadius: t.radius.pill }]}>
       {icon ? <Ionicons name={icon} size={12} color={c.fg} style={{ marginRight: 4 }} /> : null}
-      <Text variant="overline" tone="inherit" style={{ color: c.fg }}>
+      <Text variant="overline" tone="inherit" urdu={urdu} style={{ color: c.fg }}>
         {label}
       </Text>
     </View>
