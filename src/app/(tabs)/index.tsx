@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Badge, Row, Section, Stack, Text } from '@/components/ui';
+import { Badge, Card, Row, Section, Stack, Text } from '@/components/ui';
 import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
 import { VendorShowcase } from '@/features/vendors/components/VendorShowcase';
 import { usePlatformStats } from '@/features/vendors/vendors.queries';
@@ -86,6 +86,24 @@ export default function Home() {
         <VendorShowcase slug="wedding-photographers" title="Top photographers" />
         <VendorShowcase slug="caterers" title="Caterers" />
         <VendorShowcase slug="bridal-makeup-artists" title="Bridal makeup" />
+
+        {/* Guides teaser */}
+        <View style={{ paddingHorizontal: 24 }}>
+          <Card onPress={() => router.push('/guides')}>
+            <Row justify="space-between">
+              <Row gap="md" style={{ flex: 1 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(201,149,106,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="book-outline" size={22} color={t.colors.goldDark} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text variant="title">Wedding guides</Text>
+                  <Text variant="caption" tone="muted">Costs, rasms, choosing vendors & more</Text>
+                </View>
+              </Row>
+              <Ionicons name="chevron-forward" size={20} color={t.colors.textMuted} />
+            </Row>
+          </Card>
+        </View>
 
         <View style={{ paddingHorizontal: 24 }}>
           <Text variant="caption" tone="muted" align="center">
