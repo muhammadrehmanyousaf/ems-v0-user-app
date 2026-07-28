@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip, ChipSelect, EmptyState, Input, Row, Skeleton, Text } from '@/components/ui';
@@ -20,6 +21,7 @@ import {
 import { BROWSABLE_CATEGORIES } from '@/features/vendors/categories';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
 import { formatRs } from '@/features/vendors/vendor-display';
+import type { Vendor } from '@/features/vendors/vendors.types';
 import { T } from '@/i18n/T';
 import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
@@ -94,61 +96,65 @@ export default function Explore() {
         ) : null}
       </View>
 
-      {data.isLoading ? (
-        <View style={{ padding: t.spacing.lg, gap: t.spacing.lg }}>
-          {fullMode ? (
-            <Row gap="sm" justify="center" style={{ paddingVertical: t.spacing.lg }}>
+      <View style={{ flex: 1, marginTop: t.spacing.md }}>
+        {data.isLoading ? (
+          fullMode ? (
+            <Row gap="sm" justify="center" style={{ paddingVertical: t.spacing.xl }}>
               <ActivityIndicator color={t.colors.primary} />
               <T k="explore.loadingAll" variant="caption" tone="muted" />
             </Row>
           ) : (
-            [0, 1, 2].map((i) => (
-              <View key={i} style={{ gap: 8 }}>
-                <Skeleton height={170} radius={8} />
-                <Skeleton height={16} width="60%" />
-                <Skeleton height={12} width="40%" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <View key={i} style={{ width: '50%', paddingHorizontal: 6, paddingBottom: 12, gap: 8 }}>
+                  <Skeleton height={130} radius={10} />
+                  <Skeleton height={14} width="70%" />
+                  <Skeleton height={12} width="45%" />
+                </View>
+              ))}
+            </View>
+          )
+        ) : data.isError ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title={tr('explore.loadError')}
+            message={tr('explore.loadErrorSub')}
+            actionLabel={tr('common.retry')}
+            onAction={data.refetch}
+            urdu={isUrdu}
+          />
+        ) : (
+          <FlashList
+            data={displayed}
+            masonry
+            numColumns={2}
+            keyExtractor={(v: Vendor) => String(v.id)}
+            contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: t.spacing['3xl'] }}
+            showsVerticalScrollIndicator={false}
+            refreshing={false}
+            onRefresh={data.refetch}
+            onEndReachedThreshold={0.5}
+            onEndReached={() => {
+              if (!fullMode) data.loadMore();
+            }}
+            renderItem={({ item }: { item: Vendor }) => (
+              <View style={{ paddingHorizontal: 6, paddingBottom: 12 }}>
+                <VendorCard vendor={item} />
               </View>
-            ))
-          )}
-        </View>
-      ) : data.isError ? (
-        <EmptyState
-          icon="cloud-offline-outline"
-          title={tr('explore.loadError')}
-          message={tr('explore.loadErrorSub')}
-          actionLabel={tr('common.retry')}
-          onAction={data.refetch}
-          urdu={isUrdu}
-        />
-      ) : (
-        <FlatList
-          data={displayed}
-          keyExtractor={(v) => String(v.id)}
-          contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.lg, paddingBottom: t.spacing['3xl'] }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <VendorCard vendor={item} />}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={data.refetch} tintColor={t.colors.primary} />}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            if (!fullMode) data.loadMore();
-          }}
-          ListEmptyComponent={
-            <EmptyState
-              icon="search-outline"
-              title={tr('explore.noMatch')}
-              message={tr('explore.noMatchSub')}
-              urdu={isUrdu}
-            />
-          }
-          ListFooterComponent={
-            data.isFetchingMore ? (
-              <View style={{ paddingVertical: t.spacing.lg }}>
-                <ActivityIndicator color={t.colors.primary} />
-              </View>
-            ) : null
-          }
-        />
-      )}
+            )}
+            ListEmptyComponent={
+              <EmptyState icon="search-outline" title={tr('explore.noMatch')} message={tr('explore.noMatchSub')} urdu={isUrdu} />
+            }
+            ListFooterComponent={
+              data.isFetchingMore ? (
+                <View style={{ paddingVertical: t.spacing.lg }}>
+                  <ActivityIndicator color={t.colors.primary} />
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </View>
 
       <CompareBar />
 
