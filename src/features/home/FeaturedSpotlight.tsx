@@ -9,7 +9,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { Row, Text } from '@/components/ui';
@@ -20,12 +20,10 @@ import { vendorLocation, vendorPriceLabel, vendorPrimaryImage } from '../vendors
 import { useVendorsByCategory } from '../vendors/vendors.queries';
 import type { Vendor } from '../vendors/vendors.types';
 
-const { width: W } = Dimensions.get('window');
-const CARD_W = W - 48;
-const CARD_H = Math.round(CARD_W * 0.62);
-
 export function FeaturedSpotlight() {
   const t = useTheme();
+  const { width: W } = useWindowDimensions();
+  const cardH = Math.round(Math.max(0, W - 48) * 0.62);
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const q = useVendorsByCategory('wedding-venues', 8);
 
@@ -56,7 +54,7 @@ export function FeaturedSpotlight() {
           router.push(`/vendor/${pick.id}`);
         }}
       >
-        <Animated.View style={[styles.card, { borderRadius: t.radius.xl, ...t.elevation.md }, animatedStyle]}>
+        <Animated.View style={[styles.card, { height: cardH, borderRadius: t.radius.xl, ...t.elevation.md }, animatedStyle]}>
           {image ? (
             <Image source={{ uri: image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={280} />
           ) : (
@@ -114,7 +112,7 @@ export function FeaturedSpotlight() {
 }
 
 const styles = StyleSheet.create({
-  card: { width: CARD_W, height: CARD_H, overflow: 'hidden', justifyContent: 'flex-end' },
+  card: { width: '100%', overflow: 'hidden', justifyContent: 'flex-end' },
   eyebrow: { position: 'absolute', top: 14, left: 14, flexDirection: 'row', alignItems: 'center', gap: 6 },
   body: { padding: 18 },
   cta: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 38, borderRadius: 999 },

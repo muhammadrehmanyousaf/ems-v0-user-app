@@ -6,7 +6,7 @@
  */
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Dimensions, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { ArchImage, ArchOutline } from '@/components/signature';
 import { Text } from '@/components/ui';
@@ -17,22 +17,19 @@ import { BROWSABLE_CATEGORIES, categoryBySlug } from '../vendors/categories';
 import { vendorPrimaryImage } from '../vendors/vendor-display';
 import { useVendorsByCategory } from '../vendors/vendors.queries';
 
-const { width: W } = Dimensions.get('window');
 const PAD = 24;
 const GAP = 12;
-const FLAG_W = Math.floor((W - PAD * 2 - GAP) / 2);
-const FLAG_H = Math.round(FLAG_W * 1.12);
 
 const FLAGSHIPS = ['wedding-venues', 'wedding-photographers'] as const;
 
-function Flagship({ slug }: { slug: string }) {
+function Flagship({ slug, width, height }: { slug: string; width: number; height: number }) {
   const cat = categoryBySlug(slug);
   const q = useVendorsByCategory(slug, 8);
   const image = (q.data?.vendors ?? []).map(vendorPrimaryImage).find((u): u is string => !!u) ?? null;
 
   return (
-    <Pressable onPress={() => router.push({ pathname: '/explore', params: { category: slug } })}>
-      <ArchImage uri={image} width={FLAG_W} height={FLAG_H} />
+    <Pressable style={{ flex: 1 }} onPress={() => router.push({ pathname: '/explore', params: { category: slug } })}>
+      <ArchImage uri={image} width={width} height={height} />
       <Text variant="title" align="center" numberOfLines={1} style={{ marginTop: 8 }}>
         {cat?.plural ?? slug}
       </Text>
@@ -71,6 +68,9 @@ function CategoryChip({ slug }: { slug: string }) {
 
 export function CategoryMosaic() {
   const t = useTheme();
+  const { width: W } = useWindowDimensions();
+  const flagW = Math.max(0, Math.floor((W - PAD * 2 - GAP) / 2));
+  const flagH = Math.round(flagW * 1.12);
   const supporting = BROWSABLE_CATEGORIES.filter((c) => !FLAGSHIPS.includes(c.slug as (typeof FLAGSHIPS)[number]));
 
   return (
@@ -82,7 +82,7 @@ export function CategoryMosaic() {
       {/* Flagship photo cards */}
       <View style={{ flexDirection: 'row', gap: GAP, paddingHorizontal: PAD }}>
         {FLAGSHIPS.map((slug) => (
-          <Flagship key={slug} slug={slug} />
+          <Flagship key={slug} slug={slug} width={flagW} height={flagH} />
         ))}
       </View>
 

@@ -8,7 +8,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { Dimensions, Pressable, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { Carousel, type CarouselRenderItemInfo } from 'react-native-reanimated-carousel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,14 +20,13 @@ import { useT } from '@/i18n/useT';
 import { useTheme } from '@/theme';
 import { BridalWash, JaalPattern } from '@/theme/textures';
 
-const { width: W } = Dimensions.get('window');
-const ARCH_W = Math.min(W - 44, 360);
-const ARCH_H = Math.round(ARCH_W * 0.92);
-
 export function HeroCarousel() {
   const t = useTheme();
   const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
+  const { width: W } = useWindowDimensions();
+  const ARCH_W = Math.max(0, Math.min(W - 44, 360));
+  const ARCH_H = Math.round(ARCH_W * 0.92);
   const stats = usePlatformStats();
   const venues = useVendorsByCategory('wedding-venues', 8);
 

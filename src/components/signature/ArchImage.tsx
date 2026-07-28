@@ -28,6 +28,9 @@ export function ArchImage({
 }) {
   const rawId = useId().replace(/[^a-zA-Z0-9]/g, ''); // valid SVG/url() id
   const clip = `arch-${rawId}`;
+  // Guard: never emit a negative-sized SVG (happens on web prerender before the
+  // window is measured). Reserve the space; paint once we have real dimensions.
+  if (!(width > 0) || !(height > 0)) return <View style={[{ width: Math.max(0, width), height: Math.max(0, height) }, style]} />;
   const d = archPath(width, height);
 
   return (
@@ -71,6 +74,7 @@ export function ArchOutline({
   strokeWidth?: number;
   style?: ViewStyle;
 }) {
+  if (!(width > 0) || !(height > 0)) return null;
   const d = archPath(width, height);
   return (
     <View pointerEvents="none" style={[{ width, height }, style]}>
