@@ -8,7 +8,7 @@ import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Badge, Button, Card, Chip, EmptyState, Rating, Row, Section, Skeleton, Stack, Text } from '@/components/ui';
-import { InquiryModal } from '@/features/vendors/components/InquiryModal';
+import { BookingRequestModal } from '@/features/vendors/components/BookingRequestModal';
 import { VendorCard } from '@/features/vendors/components/VendorCard';
 import { AvailabilityCalendar } from '@/features/vendors/detail/AvailabilityCalendar';
 import { ReviewsSection } from '@/features/vendors/detail/ReviewsSection';
@@ -298,16 +298,17 @@ export default function VendorDetail() {
           <IconAction icon="call-outline" label="Call" onPress={onCall} disabled={!phone} />
           <IconAction icon="share-social-outline" label="Share" onPress={onShare} />
           <View style={{ flex: 1 }}>
-            <Button label="Send inquiry" icon="chatbubble-ellipses-outline" fullWidth onPress={() => setInquiryOpen(true)} />
+            <Button label="Request booking" icon="calendar-outline" fullWidth onPress={() => setInquiryOpen(true)} />
           </View>
         </Row>
       </View>
 
-      <InquiryModal
+      <BookingRequestModal
         visible={inquiryOpen}
         onClose={() => setInquiryOpen(false)}
         businessId={vendor.id}
         vendorName={vendor.name}
+        packages={packages}
       />
     </View>
   );
