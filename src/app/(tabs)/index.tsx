@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Badge, Card, Row, Section, Stack, Text } from '@/components/ui';
+import { Badge, Card, Chip, Row, Section, Stack, Text } from '@/components/ui';
+import { FEATURED_CITIES } from '@/features/vendors/cities';
 import { CategoryGrid } from '@/features/vendors/components/CategoryGrid';
 import { VendorShowcase } from '@/features/vendors/components/VendorShowcase';
 import { usePlatformStats } from '@/features/vendors/vendors.queries';
@@ -80,6 +81,18 @@ export default function Home() {
           <Section title="BROWSE BY CATEGORY">
             <CategoryGrid />
           </Section>
+        </View>
+
+        {/* Browse by city */}
+        <View style={{ gap: t.spacing.md }}>
+          <View style={{ paddingHorizontal: 24 }}>
+            <Text variant="overline" tone="label">BROWSE BY CITY</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: t.spacing.sm }}>
+            {FEATURED_CITIES.map((c) => (
+              <Chip key={c.name} label={c.name} onPress={() => router.push({ pathname: '/explore', params: { city: c.name } })} />
+            ))}
+          </ScrollView>
         </View>
 
         <VendorShowcase slug="wedding-venues" title="Featured venues" />

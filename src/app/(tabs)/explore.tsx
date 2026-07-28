@@ -23,10 +23,10 @@ import { useTheme } from '@/theme';
 export default function Explore() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; city?: string }>();
   const [category, setCategory] = useState<string | null>(params.category ?? null);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<ExploreFilters>({ ...DEFAULT_FILTERS });
+  const [filters, setFilters] = useState<ExploreFilters>({ ...DEFAULT_FILTERS, city: params.city ?? null });
   const [filterOpen, setFilterOpen] = useState(false);
 
   const fullMode = hasActiveFilters(filters) || search.trim().length > 0;

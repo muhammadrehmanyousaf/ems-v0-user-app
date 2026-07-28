@@ -38,10 +38,11 @@ export const palette = {
   beige: '#EDD9C3', // borders, dividers, input outline
   sand: '#F5E6D3', // disabled fills, subtle chips
 
-  // Semantic bases (money-colour rule: in = green/positive, out = red/owed)
-  success: '#5E8C6A', // sage-derived green (money IN)
+  // Semantic bases (money-colour rule: in = green/positive, out = red/owed).
+  // Foregrounds darkened to clear WCAG-AA (4.5:1) on their tinted backgrounds.
+  success: '#3F6B4C', // sage-derived green (money IN)
   successBg: '#E8F1E9',
-  danger: '#C25B47', // coral-derived red (owed / out / destructive)
+  danger: '#A23A2A', // coral-derived red (owed / out / destructive)
   dangerBg: '#FBEAE6',
   warning: '#C9956A', // gold
   warningBg: '#FBF1E6',
