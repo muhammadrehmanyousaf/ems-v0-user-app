@@ -1,18 +1,21 @@
 {
   "expo": {
-    "name": "weddingwala-app",
+    "name": "Wedding Wala",
     "slug": "weddingwala-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "weddingwalaapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "weddingwala",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FDF8F2",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "supportsTablet": true,
+      "bundleIdentifier": "pk.weddingwala.app"
     },
     "android": {
+      "package": "pk.weddingwala.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FDF8F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -28,11 +31,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FDF8F2",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 96
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
