@@ -6,11 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, Button, Divider, Input, Row, Section, Stack, Text } from '@/components/ui';
 import { useChangePassword, useProfile, useUpdateProfile } from '@/features/account/account.queries';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useAuthStore } from '@/store/auth';
 import { haptics, useTheme } from '@/theme';
 
 export default function Profile() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const profile = useProfile();
@@ -52,14 +55,14 @@ export default function Profile() {
   const savePassword = () => {
     setPwMsg(null);
     if (newPw.length < 8) {
-      setPwMsg('New password must be at least 8 characters.');
+      setPwMsg(tr('profile.pwLen'));
       return;
     }
     changePassword.mutate(
       { current: curPw, next: newPw },
       {
-        onSuccess: () => { haptics.success(); setPwMsg('Password updated.'); setCurPw(''); setNewPw(''); },
-        onError: () => setPwMsg('Couldn’t update password. Check your current password.'),
+        onSuccess: () => { haptics.success(); setPwMsg(tr('profile.pwUpdated')); setCurPw(''); setNewPw(''); },
+        onError: () => setPwMsg(tr('profile.pwError')),
       },
     );
   };
@@ -70,7 +73,7 @@ export default function Profile() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">Profile</Text>
+        <T k="profile.title" variant="h1" />
       </Row>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -79,24 +82,24 @@ export default function Profile() {
             <Avatar name={fullName || user?.name} uri={user?.avatarUrl} size={88} />
           </Row>
 
-          <Section title="YOUR DETAILS">
+          <Section title={tr('profile.yourDetails')} urdu={isUrdu}>
             <Stack gap="md">
-              <Input label="Full name" icon="person-outline" value={fullName} onChangeText={setFullName} />
-              <Input label="Email" icon="mail-outline" value={(p.email as string) ?? user?.email ?? ''} editable={false} />
-              <Input label="Phone / WhatsApp" icon="call-outline" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-              <Input label="City" icon="location-outline" value={city} onChangeText={setCity} placeholder="e.g. Lahore" />
-              <Button label={saved ? 'Saved ✓' : 'Save changes'} fullWidth loading={updateProfile.isPending} onPress={save} />
+              <Input label={tr('auth.fullName')} urdu={isUrdu} icon="person-outline" value={fullName} onChangeText={setFullName} />
+              <Input label={tr('auth.email')} urdu={isUrdu} icon="mail-outline" value={(p.email as string) ?? user?.email ?? ''} editable={false} />
+              <Input label={tr('auth.phone')} urdu={isUrdu} icon="call-outline" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+              <Input label={tr('profile.city')} urdu={isUrdu} icon="location-outline" value={city} onChangeText={setCity} placeholder="e.g. Lahore" />
+              <Button label={saved ? tr('profile.saved') : tr('common.saveChanges')} urdu={isUrdu} fullWidth loading={updateProfile.isPending} onPress={save} />
             </Stack>
           </Section>
 
           <Divider />
 
-          <Section title="CHANGE PASSWORD">
+          <Section title={tr('profile.changePassword')} urdu={isUrdu}>
             <Stack gap="md">
-              <Input label="Current password" icon="lock-closed-outline" secureTextEntry value={curPw} onChangeText={setCurPw} />
-              <Input label="New password" icon="lock-closed-outline" secureTextEntry value={newPw} onChangeText={setNewPw} />
-              {pwMsg ? <Text variant="caption" tone={pwMsg.includes('updated') ? 'success' : 'danger'}>{pwMsg}</Text> : null}
-              <Button label="Update password" variant="secondary" fullWidth loading={changePassword.isPending} onPress={savePassword} />
+              <Input label={tr('profile.currentPassword')} urdu={isUrdu} icon="lock-closed-outline" secureTextEntry value={curPw} onChangeText={setCurPw} />
+              <Input label={tr('profile.newPassword')} urdu={isUrdu} icon="lock-closed-outline" secureTextEntry value={newPw} onChangeText={setNewPw} />
+              {pwMsg ? <Text variant="caption" tone={pwMsg === tr('profile.pwUpdated') ? 'success' : 'danger'} urdu={isUrdu}>{pwMsg}</Text> : null}
+              <Button label={tr('profile.updatePassword')} urdu={isUrdu} variant="secondary" fullWidth loading={changePassword.isPending} onPress={savePassword} />
             </Stack>
           </Section>
         </ScrollView>

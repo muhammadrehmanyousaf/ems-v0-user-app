@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, Button, ChipSelect, Divider, Input, Row, Text } from '@/components/ui';
 import { PRIORITY_TONE, TIMELINE_CATEGORIES, TIMELINE_SEED, type Priority, type TimelineItem } from '@/features/planning/types';
 import { newId, useLocalList } from '@/features/planning/useLocalList';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { haptics, useTheme } from '@/theme';
 
 export default function TimelineTool() {
@@ -24,7 +26,7 @@ export default function TimelineTool() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">Timeline</Text>
+        <T k="tool.timeline" variant="h1" />
       </Row>
 
       <FlatList
@@ -33,9 +35,7 @@ export default function TimelineTool() {
         contentContainerStyle={{ padding: t.spacing.lg, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <Text variant="body" tone="muted" style={{ marginBottom: t.spacing.md }}>
-            Your day-of schedule, minute by minute.
-          </Text>
+          <T k="timeline.intro" variant="body" tone="muted" style={{ marginBottom: t.spacing.md }} />
         }
         renderItem={({ item, index }) => (
           <Pressable onPress={() => { setEditing(item); setModalOpen(true); }}>
@@ -105,6 +105,7 @@ function EventModal({
   onDelete?: () => void;
 }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const [time, setTime] = useState('');
   const [event, setEvent] = useState('');
   const [duration, setDuration] = useState('');
@@ -130,27 +131,27 @@ function EventModal({
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(44,24,16,0.4)' }} onPress={onClose} />
       <View style={{ backgroundColor: t.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88%' }}>
         <Row justify="space-between" style={{ padding: t.spacing.lg }}>
-          <Text variant="h2">{editing ? 'Edit event' : 'Add event'}</Text>
+          <Text variant="h2" urdu={isUrdu}>{editing ? tr('timeline.editEvent') : tr('timeline.addEvent')}</Text>
           <Pressable onPress={onClose} hitSlop={8}><Ionicons name="close" size={24} color={t.colors.textMuted} /></Pressable>
         </Row>
         <Divider />
         <ScrollView contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.md }}>
           <Row gap="md">
-            <View style={{ flex: 1 }}><Input label="Time (HH:MM)" placeholder="18:00" value={time} onChangeText={setTime} /></View>
-            <View style={{ flex: 1 }}><Input label="Duration" placeholder="1 hr" value={duration} onChangeText={setDuration} /></View>
+            <View style={{ flex: 1 }}><Input label={tr('timeline.time')} urdu={isUrdu} placeholder="18:00" value={time} onChangeText={setTime} /></View>
+            <View style={{ flex: 1 }}><Input label={tr('timeline.duration')} urdu={isUrdu} placeholder="1 hr" value={duration} onChangeText={setDuration} /></View>
           </Row>
-          <Input label="Event" placeholder="e.g. Nikah ceremony" value={event} onChangeText={setEvent} />
-          <Input label="Location" placeholder="e.g. Main hall" value={location} onChangeText={setLocation} />
+          <Input label={tr('timeline.event')} urdu={isUrdu} placeholder="e.g. Nikah ceremony" value={event} onChangeText={setEvent} />
+          <Input label={tr('timeline.location')} urdu={isUrdu} placeholder="e.g. Main hall" value={location} onChangeText={setLocation} />
           <View>
-            <Text variant="label" tone="label" style={{ marginBottom: 6 }}>CATEGORY</Text>
+            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.category')}</Text>
             <ChipSelect options={TIMELINE_CATEGORIES.map((c) => ({ value: c, label: c }))} value={category} onChange={(v) => setCategory(v ?? TIMELINE_CATEGORIES[0])} />
           </View>
           <View>
-            <Text variant="label" tone="label" style={{ marginBottom: 6 }}>PRIORITY</Text>
-            <ChipSelect scroll={false} options={[{ value: 'high', label: 'High' }, { value: 'medium', label: 'Medium' }, { value: 'low', label: 'Low' }]} value={priority} onChange={(v) => setPriority((v as Priority) ?? 'medium')} />
+            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.priority')}</Text>
+            <ChipSelect scroll={false} options={[{ value: 'high', label: tr('common.high') }, { value: 'medium', label: tr('common.medium') }, { value: 'low', label: tr('common.low') }]} value={priority} onChange={(v) => setPriority((v as Priority) ?? 'medium')} />
           </View>
-          <Button label={editing ? 'Save' : 'Add event'} fullWidth onPress={() => { if (event.trim() && time.trim()) onSave({ time: time.trim(), event: event.trim(), duration: duration.trim() || undefined, location: location.trim() || undefined, category, priority }); }} />
-          {onDelete ? <Button label="Delete" variant="ghost" onPress={onDelete} /> : null}
+          <Button label={editing ? tr('common.save') : tr('timeline.addEvent')} urdu={isUrdu} fullWidth onPress={() => { if (event.trim() && time.trim()) onSave({ time: time.trim(), event: event.trim(), duration: duration.trim() || undefined, location: location.trim() || undefined, category, priority }); }} />
+          {onDelete ? <Button label={tr('common.delete')} urdu={isUrdu} variant="ghost" onPress={onDelete} /> : null}
         </ScrollView>
       </View>
     </Modal>

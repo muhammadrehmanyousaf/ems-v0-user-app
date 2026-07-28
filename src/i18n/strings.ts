@@ -182,6 +182,85 @@ export const STRINGS = {
   'auth.errPwLen': { en: 'Password must be at least 8 characters.', ur: 'پاس ورڈ کم از کم ۸ حروف کا ہونا چاہیے۔' },
   'auth.errPwMatch': { en: 'Passwords don’t match.', ur: 'پاس ورڈ مماثل نہیں ہیں۔' },
   'auth.errSignUp': { en: 'Sign up failed. Please try again.', ur: 'رجسٹریشن ناکام۔ دوبارہ کوشش کریں۔' },
+
+  // Shared (forms / planning tools)
+  'common.high': { en: 'High', ur: 'زیادہ' },
+  'common.medium': { en: 'Medium', ur: 'درمیانہ' },
+  'common.low': { en: 'Low', ur: 'کم' },
+  'common.delete': { en: 'Delete', ur: 'حذف کریں' },
+  'common.save': { en: 'Save', ur: 'محفوظ کریں' },
+  'common.saveChanges': { en: 'Save changes', ur: 'تبدیلیاں محفوظ کریں' },
+  'common.category': { en: 'CATEGORY', ur: 'زمرہ' },
+  'common.priority': { en: 'PRIORITY', ur: 'ترجیح' },
+
+  // Onboarding
+  'onb.skip': { en: 'Skip', ur: 'چھوڑیں' },
+  'onb.next': { en: 'Next', ur: 'اگلا' },
+  'onb.getStarted': { en: 'Get started', ur: 'شروع کریں' },
+  'onb.s1Title': { en: 'Discover the best', ur: 'بہترین دریافت کریں' },
+  'onb.s1Body': { en: 'Browse 3,000+ trusted wedding vendors across Pakistan — venues, photographers, caterers, makeup & more.', ur: 'پاکستان بھر میں ۳۰۰۰ سے زائد معتبر شادی وینڈرز دیکھیں — مقامات، فوٹوگرافرز، کیٹررز، میک اپ اور مزید۔' },
+  'onb.s2Title': { en: 'Plan every detail', ur: 'ہر تفصیل کی منصوبہ بندی' },
+  'onb.s2Body': { en: 'Budget, checklist, guest list and a day-of timeline — your whole shaadi, organised in one place.', ur: 'بجٹ، چیک لسٹ، مہمانوں کی فہرست اور دن کا ٹائم لائن — آپ کی پوری شادی، ایک جگہ منظم۔' },
+  'onb.s3Title': { en: 'Connect directly', ur: 'براہِ راست رابطہ' },
+  'onb.s3Body': { en: 'Save your favourites, compare them, and reach vendors on WhatsApp — no middleman, no commission.', ur: 'اپنے پسندیدہ محفوظ کریں، موازنہ کریں، اور وینڈرز سے واٹس ایپ پر رابطہ کریں — نہ کوئی بیچ والا، نہ کمیشن۔' },
+
+  // Profile
+  'profile.title': { en: 'Profile', ur: 'پروفائل' },
+  'profile.yourDetails': { en: 'YOUR DETAILS', ur: 'آپ کی تفصیلات' },
+  'profile.changePassword': { en: 'CHANGE PASSWORD', ur: 'پاس ورڈ تبدیل کریں' },
+  'profile.city': { en: 'City', ur: 'شہر' },
+  'profile.saved': { en: 'Saved ✓', ur: 'محفوظ ✓' },
+  'profile.currentPassword': { en: 'Current password', ur: 'موجودہ پاس ورڈ' },
+  'profile.newPassword': { en: 'New password', ur: 'نیا پاس ورڈ' },
+  'profile.updatePassword': { en: 'Update password', ur: 'پاس ورڈ اپڈیٹ کریں' },
+  'profile.pwLen': { en: 'New password must be at least 8 characters.', ur: 'نیا پاس ورڈ کم از کم ۸ حروف کا ہونا چاہیے۔' },
+  'profile.pwUpdated': { en: 'Password updated.', ur: 'پاس ورڈ اپڈیٹ ہو گیا۔' },
+  'profile.pwError': { en: 'Couldn’t update password. Check your current password.', ur: 'پاس ورڈ اپڈیٹ نہیں ہو سکا۔ اپنا موجودہ پاس ورڈ چیک کریں۔' },
+
+  // Budget tool
+  'budget.totalEstimated': { en: 'TOTAL ESTIMATED', ur: 'کل تخمینہ' },
+  'budget.spent': { en: 'SPENT', ur: 'خرچ شدہ' },
+  'budget.byCategory': { en: 'BY CATEGORY', ur: 'زمرے کے لحاظ سے' },
+  'budget.lineItems': { en: 'LINE ITEMS', ur: 'اشیاء' },
+  'budget.paid': { en: 'Paid', ur: 'ادا شدہ' },
+  'budget.editItem': { en: 'Edit item', ur: 'آئٹم میں ترمیم' },
+  'budget.addItem': { en: 'Add item', ur: 'آئٹم شامل کریں' },
+  'budget.item': { en: 'Item', ur: 'آئٹم' },
+  'budget.estimated': { en: 'Estimated (Rs)', ur: 'تخمینہ (روپے)' },
+  'budget.paidRs': { en: 'Paid (Rs)', ur: 'ادا شدہ (روپے)' },
+
+  // Checklist tool
+  'checklist.done': { en: 'done', ur: 'مکمل' },
+  'checklist.addTask': { en: 'Add task', ur: 'ٹاسک شامل کریں' },
+  'checklist.task': { en: 'Task', ur: 'ٹاسک' },
+
+  // Guests tool
+  'guests.total': { en: 'TOTAL', ur: 'کل' },
+  'guests.attending': { en: 'ATTENDING', ur: 'شریک' },
+  'guests.pending': { en: 'PENDING', ur: 'زیرِ التوا' },
+  'guests.declined': { en: 'DECLINED', ur: 'معذرت' },
+  'guests.searchGuests': { en: 'Search guests', ur: 'مہمان تلاش کریں' },
+  'guests.allGroups': { en: 'All groups', ur: 'تمام گروپس' },
+  'guests.emptyList': { en: 'No guests yet — add your first.', ur: 'ابھی کوئی مہمان نہیں — پہلا شامل کریں۔' },
+  'guests.editGuest': { en: 'Edit guest', ur: 'مہمان میں ترمیم' },
+  'guests.addGuest': { en: 'Add guest', ur: 'مہمان شامل کریں' },
+  'guests.name': { en: 'Name', ur: 'نام' },
+  'guests.group': { en: 'GROUP', ur: 'گروپ' },
+  'guests.partySize': { en: 'Party size', ur: 'افراد کی تعداد' },
+  'guests.guestWord': { en: 'guests', ur: 'مہمان' },
+  'rsvp.attending': { en: 'Attending', ur: 'شریک' },
+  'rsvp.pending': { en: 'Pending', ur: 'زیرِ التوا' },
+  'rsvp.declined': { en: 'Declined', ur: 'معذرت' },
+  'rsvp.label': { en: 'RSVP', ur: 'حاضری' },
+
+  // Timeline tool
+  'timeline.intro': { en: 'Your day-of schedule, minute by minute.', ur: 'آپ کے دن کا شیڈول، منٹ بہ منٹ۔' },
+  'timeline.editEvent': { en: 'Edit event', ur: 'ایونٹ میں ترمیم' },
+  'timeline.addEvent': { en: 'Add event', ur: 'ایونٹ شامل کریں' },
+  'timeline.time': { en: 'Time (HH:MM)', ur: 'وقت (HH:MM)' },
+  'timeline.duration': { en: 'Duration', ur: 'دورانیہ' },
+  'timeline.event': { en: 'Event', ur: 'ایونٹ' },
+  'timeline.location': { en: 'Location', ur: 'مقام' },
 } as const satisfies Record<string, Entry>;
 
 export type StringKey = keyof typeof STRINGS;

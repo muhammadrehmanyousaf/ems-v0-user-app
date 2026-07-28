@@ -4,21 +4,25 @@ import { useRef, useState } from 'react';
 import { Dimensions, FlatList, Pressable, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Stack, Text } from '@/components/ui';
+import { Button, Stack } from '@/components/ui';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useTheme } from '@/theme';
 import { BridalWash, JaalPattern } from '@/theme/textures';
 
 const { width } = Dimensions.get('window');
 
-const SLIDES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
-  { icon: 'search-outline', title: 'Discover the best', body: 'Browse 3,000+ trusted wedding vendors across Pakistan — venues, photographers, caterers, makeup & more.' },
-  { icon: 'calendar-outline', title: 'Plan every detail', body: 'Budget, checklist, guest list and a day-of timeline — your whole shaadi, organised in one place.' },
-  { icon: 'logo-whatsapp', title: 'Connect directly', body: 'Save your favourites, compare them, and reach vendors on WhatsApp — no middleman, no commission.' },
+const SLIDES: { icon: keyof typeof Ionicons.glyphMap; titleKey: StringKey; bodyKey: StringKey }[] = [
+  { icon: 'search-outline', titleKey: 'onb.s1Title', bodyKey: 'onb.s1Body' },
+  { icon: 'calendar-outline', titleKey: 'onb.s2Title', bodyKey: 'onb.s2Body' },
+  { icon: 'logo-whatsapp', titleKey: 'onb.s3Title', bodyKey: 'onb.s3Body' },
 ];
 
 export default function Onboarding() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const markSeen = useOnboardingStore((s) => s.markSeen);
   const [index, setIndex] = useState(0);
@@ -41,7 +45,7 @@ export default function Onboarding() {
       <JaalPattern opacity={0.05} />
       <View style={{ position: 'absolute', top: insets.top + 8, right: 16, zIndex: 2 }}>
         <Pressable onPress={finish} hitSlop={8}>
-          <Text variant="label" tone="muted">Skip</Text>
+          <T k="onb.skip" variant="label" tone="muted" />
         </Pressable>
       </View>
 
@@ -52,16 +56,14 @@ export default function Onboarding() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onScroll}
-        keyExtractor={(s) => s.title}
+        keyExtractor={(s) => s.titleKey}
         renderItem={({ item }) => (
           <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
             <View style={{ width: 108, height: 108, borderRadius: 54, backgroundColor: 'rgba(201,149,106,0.16)', alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>
               <Ionicons name={item.icon} size={48} color={t.colors.goldDark} />
             </View>
-            <Text variant="display" align="center">{item.title}</Text>
-            <Text variant="bodyLead" tone="muted" align="center" style={{ marginTop: 12 }}>
-              {item.body}
-            </Text>
+            <T k={item.titleKey} variant="display" align="center" />
+            <T k={item.bodyKey} variant="bodyLead" tone="muted" align="center" style={{ marginTop: 12 }} />
           </View>
         )}
       />
@@ -81,7 +83,7 @@ export default function Onboarding() {
           ))}
         </View>
         <Stack gap="sm">
-          <Button label={index === SLIDES.length - 1 ? 'Get started' : 'Next'} fullWidth onPress={next} iconRight={index === SLIDES.length - 1 ? 'heart' : 'arrow-forward'} />
+          <Button label={index === SLIDES.length - 1 ? tr('onb.getStarted') : tr('onb.next')} urdu={isUrdu} fullWidth onPress={next} iconRight={index === SLIDES.length - 1 ? 'heart' : 'arrow-forward'} />
         </Stack>
       </View>
     </BridalWash>

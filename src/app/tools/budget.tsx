@@ -8,10 +8,14 @@ import { Badge, Button, Card, ChipSelect, Divider, Input, Row, Stack, Text } fro
 import { BUDGET_CATEGORIES, BUDGET_SEED, PRIORITY_TONE, type BudgetItem, type Priority } from '@/features/planning/types';
 import { newId, useLocalList } from '@/features/planning/useLocalList';
 import { formatRs } from '@/features/vendors/vendor-display';
+import type { StringKey } from '@/i18n/strings';
+import { T } from '@/i18n/T';
+import { useT } from '@/i18n/useT';
 import { haptics, useTheme } from '@/theme';
 
 export default function BudgetTool() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const insets = useSafeAreaInsets();
   const { items, add, update, remove } = useLocalList<BudgetItem>('ww.plan.budget', BUDGET_SEED);
   const [editing, setEditing] = useState<BudgetItem | null>(null);
@@ -40,7 +44,7 @@ export default function BudgetTool() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
         </Pressable>
-        <Text variant="h1">Budget</Text>
+        <T k="tool.budget" variant="h1" />
       </Row>
 
       <FlatList
@@ -53,18 +57,18 @@ export default function BudgetTool() {
             <Card>
               <Row justify="space-between">
                 <Stack gap="xxs">
-                  <Text variant="overline" tone="label">TOTAL ESTIMATED</Text>
+                  <T k="budget.totalEstimated" variant="overline" tone="label" />
                   <Text variant="display" tone="gold">{formatRs(totals.estimated)}</Text>
                 </Stack>
                 <Stack gap="xxs" style={{ alignItems: 'flex-end' }}>
-                  <Text variant="overline" tone="label">SPENT</Text>
+                  <T k="budget.spent" variant="overline" tone="label" />
                   <Text variant="h3" tone="success">{formatRs(totals.actual)}</Text>
                 </Stack>
               </Row>
             </Card>
             {totals.byCat.length > 0 ? (
               <Card>
-                <Text variant="overline" tone="label" style={{ marginBottom: 8 }}>BY CATEGORY</Text>
+                <T k="budget.byCategory" variant="overline" tone="label" style={{ marginBottom: 8 }} />
                 <Stack gap="sm">
                   {totals.byCat.map(([cat, amt]) => {
                     const pct = totals.estimated > 0 ? amt / totals.estimated : 0;
@@ -83,7 +87,7 @@ export default function BudgetTool() {
                 </Stack>
               </Card>
             ) : null}
-            <Text variant="overline" tone="label">LINE ITEMS</Text>
+            <T k="budget.lineItems" variant="overline" tone="label" />
           </Stack>
         }
         renderItem={({ item }) => (
@@ -92,13 +96,13 @@ export default function BudgetTool() {
               <Stack gap="xxs" style={{ flex: 1 }}>
                 <Row gap="sm">
                   <Text variant="title">{item.item}</Text>
-                  <Badge label={item.priority} tone={PRIORITY_TONE[item.priority]} />
+                  <Badge label={tr(`common.${item.priority}` as StringKey)} urdu={isUrdu} tone={PRIORITY_TONE[item.priority]} />
                 </Row>
                 <Text variant="caption" tone="muted">{item.category}</Text>
               </Stack>
               <Stack gap="xxs" style={{ alignItems: 'flex-end' }}>
                 <Text variant="bodyMedium" tone="gold">{formatRs(item.estimated)}</Text>
-                {item.actual > 0 ? <Text variant="caption" tone="success">Paid {formatRs(item.actual)}</Text> : null}
+                {item.actual > 0 ? <Text variant="caption" tone="success" urdu={isUrdu}>{tr('budget.paid')} {formatRs(item.actual)}</Text> : null}
               </Stack>
             </Row>
           </Card>
@@ -149,6 +153,7 @@ function BudgetItemModal({
   onDelete?: () => void;
 }) {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
   const [item, setItem] = useState('');
   const [category, setCategory] = useState<string>(BUDGET_CATEGORIES[0]);
   const [estimated, setEstimated] = useState('');
@@ -172,33 +177,34 @@ function BudgetItemModal({
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(44,24,16,0.4)' }} onPress={onClose} />
       <View style={{ backgroundColor: t.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88%' }}>
         <Row justify="space-between" style={{ padding: t.spacing.lg }}>
-          <Text variant="h2">{editing ? 'Edit item' : 'Add item'}</Text>
+          <Text variant="h2" urdu={isUrdu}>{editing ? tr('budget.editItem') : tr('budget.addItem')}</Text>
           <Pressable onPress={onClose} hitSlop={8}><Ionicons name="close" size={24} color={t.colors.textMuted} /></Pressable>
         </Row>
         <Divider />
         <ScrollView contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.md }}>
-          <Input label="Item" placeholder="e.g. Barat hall" value={item} onChangeText={setItem} />
+          <Input label={tr('budget.item')} urdu={isUrdu} placeholder="e.g. Barat hall" value={item} onChangeText={setItem} />
           <View>
-            <Text variant="label" tone="label" style={{ marginBottom: 6 }}>CATEGORY</Text>
+            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.category')}</Text>
             <ChipSelect options={BUDGET_CATEGORIES.map((c) => ({ value: c, label: c }))} value={category} onChange={(v) => setCategory(v ?? BUDGET_CATEGORIES[0])} />
           </View>
           <Row gap="md">
-            <View style={{ flex: 1 }}><Input label="Estimated (Rs)" placeholder="0" keyboardType="number-pad" value={estimated} onChangeText={setEstimated} /></View>
-            <View style={{ flex: 1 }}><Input label="Paid (Rs)" placeholder="0" keyboardType="number-pad" value={actual} onChangeText={setActual} /></View>
+            <View style={{ flex: 1 }}><Input label={tr('budget.estimated')} urdu={isUrdu} placeholder="0" keyboardType="number-pad" value={estimated} onChangeText={setEstimated} /></View>
+            <View style={{ flex: 1 }}><Input label={tr('budget.paidRs')} urdu={isUrdu} placeholder="0" keyboardType="number-pad" value={actual} onChangeText={setActual} /></View>
           </Row>
           <View>
-            <Text variant="label" tone="label" style={{ marginBottom: 6 }}>PRIORITY</Text>
-            <ChipSelect scroll={false} options={[{ value: 'high', label: 'High' }, { value: 'medium', label: 'Medium' }, { value: 'low', label: 'Low' }]} value={priority} onChange={(v) => setPriority((v as Priority) ?? 'medium')} />
+            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.priority')}</Text>
+            <ChipSelect scroll={false} options={[{ value: 'high', label: tr('common.high') }, { value: 'medium', label: tr('common.medium') }, { value: 'low', label: tr('common.low') }]} value={priority} onChange={(v) => setPriority((v as Priority) ?? 'medium')} />
           </View>
           <Button
-            label={editing ? 'Save changes' : 'Add item'}
+            label={editing ? tr('common.saveChanges') : tr('budget.addItem')}
+            urdu={isUrdu}
             fullWidth
             onPress={() => {
               if (!item.trim()) return;
               onSave({ item: item.trim(), category, estimated: Number(estimated) || 0, actual: Number(actual) || 0, priority });
             }}
           />
-          {onDelete ? <Button label="Delete" variant="ghost" onPress={onDelete} /> : null}
+          {onDelete ? <Button label={tr('common.delete')} urdu={isUrdu} variant="ghost" onPress={onDelete} /> : null}
         </ScrollView>
       </View>
     </Modal>
