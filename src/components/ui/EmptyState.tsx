@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { View } from 'react-native';
 
 import { useTheme } from '@/theme';
+
 import { Button } from './Button';
 import { Text } from './Text';
 

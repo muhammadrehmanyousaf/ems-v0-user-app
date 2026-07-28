@@ -1,7 +1,7 @@
 /** Assembled theme object. Light-only for v1 (the web is light). */
-import { colors, palette, spacing, radius, elevation, moneyTone } from './tokens';
 import { typography, fontFamily } from './fonts';
 import { motion } from './motion';
+import { colors, palette, spacing, radius, elevation, moneyTone } from './tokens';
 
 export const theme = {
   colors,

@@ -3,15 +3,6 @@
  * Fonts verified LIVE on weddingwala.pk: Playfair Display (display/headings),
  * DM Sans (body/UI), Inter (dense UI/nav/numbers), Noto Nastaliq Urdu (Urdu).
  */
-import { useFonts } from 'expo-font';
-import {
-  PlayfairDisplay_400Regular,
-  PlayfairDisplay_500Medium,
-  PlayfairDisplay_600SemiBold,
-  PlayfairDisplay_700Bold,
-  PlayfairDisplay_400Regular_Italic,
-  PlayfairDisplay_600SemiBold_Italic,
-} from '@expo-google-fonts/playfair-display';
 import {
   DMSans_300Light,
   DMSans_400Regular,
@@ -28,6 +19,15 @@ import {
   NotoNastaliqUrdu_400Regular,
   NotoNastaliqUrdu_700Bold,
 } from '@expo-google-fonts/noto-nastaliq-urdu';
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_500Medium,
+  PlayfairDisplay_600SemiBold,
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_600SemiBold_Italic,
+} from '@expo-google-fonts/playfair-display';
+import { useFonts } from 'expo-font';
 
 /** Family keys registered with the font system (used as `fontFamily` in styles). */
 export const fontFamily = {

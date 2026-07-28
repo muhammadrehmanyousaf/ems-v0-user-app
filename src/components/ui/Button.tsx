@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } f
 import Animated from 'react-native-reanimated';
 
 import { haptics, usePressScale, useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';

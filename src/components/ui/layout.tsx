@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme, type Spacing } from '@/theme';
+
 import { Text } from './Text';
 
 export function Row({

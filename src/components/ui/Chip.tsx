@@ -2,6 +2,7 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { haptics, useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 export interface ChipProps {

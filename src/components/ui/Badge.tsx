@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 export type BadgeTone = 'gold' | 'rose' | 'success' | 'danger' | 'info' | 'neutral' | 'dark';

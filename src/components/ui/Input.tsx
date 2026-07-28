@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 export interface InputProps extends TextInputProps {

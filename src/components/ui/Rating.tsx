@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 export interface RatingProps {

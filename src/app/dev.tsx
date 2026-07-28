@@ -19,8 +19,8 @@ import {
   Stack,
   Text,
 } from '@/components/ui';
-import { BridalWash, JaalPattern, ShimmerText } from '@/theme/textures';
 import { useTheme } from '@/theme';
+import { BridalWash, JaalPattern, ShimmerText } from '@/theme/textures';
 
 export default function Showcase() {
   const t = useTheme();

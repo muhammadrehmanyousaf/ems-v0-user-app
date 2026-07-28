@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { View } from 'react-native';
 
 import { useTheme } from '@/theme';
+
 import { Text } from './Text';
 
 export interface AvatarProps {
