@@ -63,8 +63,11 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
           {image ? (
             <Image source={{ uri: image }} style={styles.image} contentFit="cover" transition={240} recyclingKey={String(vendor.id)} />
           ) : (
-            <View style={[styles.image, styles.imageFallback, { backgroundColor: t.colors.sand }]}>
-              <Ionicons name="image-outline" size={30} color={t.colors.textLabel} />
+            <View style={[styles.image, styles.imageFallback]}>
+              <LinearGradient colors={gradients.roseWash} style={StyleSheet.absoluteFill} />
+              <Text variant="hero" italic style={{ fontSize: 46, color: t.colors.gold, opacity: 0.5 }}>
+                {(vendor.name?.trim()?.[0] ?? '♥').toUpperCase()}
+              </Text>
             </View>
           )}
           <LinearGradient colors={gradients.topScrim} style={styles.topScrim} />

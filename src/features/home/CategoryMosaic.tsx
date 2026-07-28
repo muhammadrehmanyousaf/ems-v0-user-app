@@ -30,7 +30,7 @@ function Flagship({ slug, width, height }: { slug: string; width: number; height
   return (
     <Pressable style={{ flex: 1 }} onPress={() => router.push({ pathname: '/explore', params: { category: slug } })}>
       <ArchImage uri={image} width={width} height={height} />
-      <Text variant="title" align="center" numberOfLines={1} style={{ marginTop: 8 }}>
+      <Text variant="bodyMedium" align="center" numberOfLines={1} style={{ marginTop: 8 }}>
         {cat?.plural ?? slug}
       </Text>
     </Pressable>
