@@ -74,7 +74,7 @@ export default function Account() {
                 label="Sign in / Register"
                 icon="person-outline"
                 fullWidth
-                onPress={() => router.push('/dev')}
+                onPress={() => router.push('/auth/login')}
               />
             )}
           </View>
