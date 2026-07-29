@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 // exceeded" and crashing the standalone app on launch (native only; web's screens
 // shim never runs that effect). Unstable-reference bug class, cf. expo/expo#44563.
 // Hoisted to module scope so the reference never changes.
-const ROOT_STACK_OPTIONS = { headerShown: false, contentStyle: { backgroundColor: colors.screen } };
+const ROOT_STACK_OPTIONS = { headerShown: false };
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
