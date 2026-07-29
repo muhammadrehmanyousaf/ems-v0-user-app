@@ -16,6 +16,14 @@ import { ThemeProvider, useAppFonts, colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
 
+// Stable navigator options. Passing a fresh screenOptions object — or an inline
+// `contentStyle` — to <Stack> on every render re-fires react-native-screens' native
+// option-sync effect on the New Architecture, spinning into "Maximum update depth
+// exceeded" and crashing the standalone app on launch (native only; web's screens
+// shim never runs that effect). Unstable-reference bug class, cf. expo/expo#44563.
+// Hoisted to module scope so the reference never changes.
+const ROOT_STACK_OPTIONS = { headerShown: false, contentStyle: { backgroundColor: colors.screen } };
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
   const onboardingLoaded = useOnboardingStore((s) => s.loaded);
@@ -64,7 +72,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <BottomSheetModalProvider>
             <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.screen } }} />
+            <Stack screenOptions={ROOT_STACK_OPTIONS} />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </QueryClientProvider>
