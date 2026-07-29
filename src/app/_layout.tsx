@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, router, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -37,10 +37,19 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError]);
 
   // First-launch gate: once the navigator is ready and the flag has loaded,
-  // send new users to onboarding.
+  // send new users to onboarding — exactly once. The ref guard is essential:
+  // router.replace mutates the root navigation state, which re-runs this effect
+  // (navState.key is a dependency). Without the guard it would replace -> re-run ->
+  // replace ... endlessly ("Maximum update depth exceeded") on every fresh launch,
+  // because onboardingSeen stays false until the user finishes onboarding.
+  const didRouteOnboarding = useRef(false);
   useEffect(() => {
+    if (didRouteOnboarding.current) return;
     if (!navState?.key || !onboardingLoaded) return;
-    if (!onboardingSeen) router.replace('/onboarding');
+    if (!onboardingSeen) {
+      didRouteOnboarding.current = true;
+      router.replace('/onboarding');
+    }
   }, [navState?.key, onboardingLoaded, onboardingSeen]);
 
   if (!fontsLoaded && !fontError) return null;
