@@ -5,7 +5,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { queryClient } from '@/lib/query/queryClient';
 import { useAuthStore } from '@/store/auth';
@@ -57,14 +56,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.screen }}>
       <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <BottomSheetModalProvider>
-              <StatusBar style="dark" />
-              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.screen } }} />
-            </BottomSheetModalProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
+        {/* NOTE: no SafeAreaProvider here — expo-router already provides one at the
+            root. A second, nested provider makes RNCSafeAreaProvider's inset
+            measurement feedback-loop on the New Architecture ("Maximum update depth
+            exceeded"), crashing the standalone app on launch (native only; web has
+            static insets so it never surfaced). See expo/expo#39472, #37316. */}
+        <ThemeProvider>
+          <BottomSheetModalProvider>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.screen } }} />
+          </BottomSheetModalProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
