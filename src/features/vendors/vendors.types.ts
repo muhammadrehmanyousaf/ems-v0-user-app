@@ -56,6 +56,23 @@ export interface Vendor {
   cityCovered?: string[] | null;
   maxCapacity?: number | null;
   minCapacity?: number | null;
+  /**
+   * Capacity is FIVE separate columns on the business row, and they mean
+   * different things — conflating them is how the vendor form once published
+   * "150 bookings at once". `seatedCapacity` is the seated-comfort figure a venue
+   * actually sells; `legalGuestCap` is the fire-rated legal occupancy.
+   */
+  seatedCapacity?: number | null;
+  standingCapacity?: number | null;
+  comfortCapacity?: number | null;
+  indoorCapacity?: number | null;
+  outdoorCapacity?: number | null;
+  legalGuestCap?: number | null;
+  carParkingCapacity?: number | null;
+  /** Advance is a pair: the number, and whether it's a percentage or an amount. */
+  downPayment?: number | string | null;
+  downPaymentType?: 'Percentage' | 'Fixed' | string | null;
+  venueType?: string | null;
   whatsappNumber?: string | null;
   ownerName?: string | null;
   ownerBio?: string | null;

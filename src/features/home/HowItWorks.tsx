@@ -1,41 +1,65 @@
-/** HowItWorks — the web's "three steps to your dream shaadi", app-native. */
-import Ionicons from '@expo/vector-icons/Ionicons';
+/**
+ * HowItWorks — **v4.** Governed by rules.md §0.0.
+ *
+ * v3 drew each step as a 44px gold-tinted circle holding an icon, a gold "STEP 1"
+ * overline, a title and a body — three coloured elements per row, nine on the
+ * block, sitting on a pink wash band. It read like a marketing panel bolted onto
+ * a product.
+ *
+ * v4: a numeral, a hairline, and two lines of type. The number IS the icon —
+ * that is what a numbered list is — and the hairline between rows does the work
+ * the tinted circles were doing. No wash, no gold, no icons.
+ */
 import { View } from 'react-native';
 
-import { Row, Stack, Text } from '@/components/ui';
+import { Row, Text } from '@/components/ui';
 import type { StringKey } from '@/i18n/strings';
 import { T } from '@/i18n/T';
-import { useTheme } from '@/theme';
+import { useT } from '@/i18n/useT';
+import { layout, useTheme } from '@/theme';
 
-const STEPS: { icon: keyof typeof Ionicons.glyphMap; titleKey: StringKey; bodyKey: StringKey }[] = [
-  { icon: 'search-outline', titleKey: 'home.step1Title', bodyKey: 'home.step1Body' },
-  { icon: 'git-compare-outline', titleKey: 'home.step2Title', bodyKey: 'home.step2Body' },
-  { icon: 'logo-whatsapp', titleKey: 'home.step3Title', bodyKey: 'home.step3Body' },
+const STEPS: { titleKey: StringKey; bodyKey: StringKey }[] = [
+  { titleKey: 'home.step1Title', bodyKey: 'home.step1Body' },
+  { titleKey: 'home.step2Title', bodyKey: 'home.step2Body' },
+  { titleKey: 'home.step3Title', bodyKey: 'home.step3Body' },
 ];
 
 export function HowItWorks() {
   const t = useTheme();
+  const { t: tr, isUrdu } = useT();
+
   return (
-    <View style={{ paddingHorizontal: t.spacing.xl, gap: t.spacing.md }}>
-      <T k="home.threeSteps" variant="overline" tone="label" />
-      <Stack gap="md">
+    <View style={{ paddingHorizontal: layout.gutter, gap: t.spacing.xl }}>
+      <Text variant="h2" urdu={isUrdu}>
+        {tr('home.threeSteps')}
+      </Text>
+
+      <View>
         {STEPS.map((s, i) => (
-          <Row key={s.titleKey} gap="md" align="flex-start">
-            <View style={{ alignItems: 'center', width: 44 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(201,149,106,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={s.icon} size={20} color={t.colors.goldDark} />
-              </View>
-            </View>
-            <Stack gap="xxs" style={{ flex: 1, paddingTop: 2 }}>
-              <Row gap="sm">
-                <Text variant="overline" tone="gold">STEP {i + 1}</Text>
-                <T k={s.titleKey} variant="title" />
-              </Row>
+          <Row
+            key={s.titleKey}
+            gap="lg"
+            align="flex-start"
+            style={{
+              paddingVertical: t.spacing.lg,
+              // A rule between rows, and none after the last — a trailing
+              // hairline reads as a section that got cut off.
+              borderBottomWidth: i < STEPS.length - 1 ? 1 : 0,
+              borderBottomColor: t.colors.border,
+            }}
+          >
+            {/* The numeral is the icon. Tabular figures so 1/2/3 sit on the
+                same axis and the column of titles starts at one x-position. */}
+            <Text variant="mono" tone="muted" style={{ fontSize: 15, width: 18 }}>
+              {i + 1}
+            </Text>
+            <View style={{ flex: 1, gap: 3 }}>
+              <T k={s.titleKey} variant="title" />
               <T k={s.bodyKey} variant="caption" tone="muted" />
-            </Stack>
+            </View>
           </Row>
         ))}
-      </Stack>
+      </View>
     </View>
   );
 }

@@ -38,7 +38,8 @@
       ],
       "expo-secure-store",
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -47,9 +48,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d6e8d302-fe44-473e-bab9-d5fb23c9be4c"
+        "projectId": "e334a0ba-2b57-4acf-bb48-d1445bbc312c"
       }
     },
-    "owner": "weddingwala12s-team"
+    "owner": "muhammadrehman1234567890s-team"
   }
 }

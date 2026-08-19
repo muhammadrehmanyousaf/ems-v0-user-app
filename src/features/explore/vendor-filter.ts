@@ -67,17 +67,37 @@ export function hasActiveFilters(f: ExploreFilters): boolean {
 }
 
 /** Cities + amenities present in the current result set, for dynamic chips. */
-export function deriveFacets(vendors: Vendor[]): { cities: string[]; amenities: string[] } {
+export interface ExploreFacets {
+  cities: string[];
+  amenities: string[];
+  /**
+   * Every vendor's starting price, INCLUDING the nulls.
+   *
+   * The nulls are the point. `PriceHistogram` counts them to state how much of
+   * the catalogue a price filter silently excludes, and at ~98% unpriced that
+   * sentence is the most important thing on the filter sheet. Stripping them
+   * here would turn an honest chart into a flattering one.
+   */
+  prices: (number | null | undefined)[];
+}
+
+export function deriveFacets(vendors: Vendor[]): ExploreFacets {
   const cities = new Set<string>();
   const amenities = new Set<string>();
+  // One pass that already walks every vendor — the distribution is free, which
+  // is why the histogram was worth building for us before it was for anyone we
+  // copied it from.
+  const prices: (number | null | undefined)[] = [];
   for (const v of vendors) {
     const c = (v.city ?? v.vendor?.city ?? '').trim();
     if (c) cities.add(c);
     for (const a of toArray(v.amenities)) amenities.add(a);
+    prices.push(v.minimumPrice);
   }
   return {
     cities: [...cities].sort((a, b) => a.localeCompare(b)),
     amenities: [...amenities].sort((a, b) => a.localeCompare(b)).slice(0, 40),
+    prices,
   };
 }
 
