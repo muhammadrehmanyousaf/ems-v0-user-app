@@ -1,5 +1,5 @@
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { Tabs } from 'expo-router';
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 
 import { CustomTabBar } from '@/components/navigation/CustomTabBar';
 

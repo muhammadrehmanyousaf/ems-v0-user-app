@@ -9,8 +9,10 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
   updateProfile,
+  uploadProfilePicture,
   type ProfileUpdate,
 } from '@/lib/api/endpoints/account';
+import type { UploadFile } from '@/lib/api/endpoints/auth';
 import { useAuthStore } from '@/store/auth';
 
 export function useProfile() {
@@ -52,7 +54,38 @@ export function useUpdateProfile() {
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ['profile'] });
       const current = useAuthStore.getState().user;
-      if (current) setUser({ ...current, name: vars.fullName ?? current.name, phoneNumber: vars.phoneNumber ?? current.phoneNumber });
+      if (current) {
+        setUser({
+          ...current,
+          name: vars.fullName ?? current.name,
+          // `email` was absent here, so a customer could change their address
+          // and the header, the account tab and every prefilled form kept
+          // showing the old one until the next cold start.
+          email: vars.email ?? current.email,
+          phoneNumber: vars.phoneNumber ?? current.phoneNumber,
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Profile photograph. Separate endpoint, separate mutation — it is not part of
+ * the `PATCH /users/profile` body and never has been.
+ *
+ * The returned URL is written straight into the auth store so the avatar in the
+ * header changes at the same moment as the one on this screen. Without that the
+ * two disagree until the next launch, which reads as the upload having failed.
+ */
+export function useUploadAvatar() {
+  const qc = useQueryClient();
+  const setUser = useAuthStore((s) => s.setUser);
+  return useMutation({
+    mutationFn: (file: UploadFile) => uploadProfilePicture(file),
+    onSuccess: (url) => {
+      qc.invalidateQueries({ queryKey: ['profile'] });
+      const current = useAuthStore.getState().user;
+      if (current && url) setUser({ ...current, avatarUrl: url });
     },
   });
 }

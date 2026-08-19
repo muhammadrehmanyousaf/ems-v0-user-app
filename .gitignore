@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# v4 web export output (13MB build artefact, not source)
+dist-v4/

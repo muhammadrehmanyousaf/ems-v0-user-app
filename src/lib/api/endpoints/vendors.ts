@@ -1,6 +1,8 @@
 /** Vendor (business) API endpoints. Shapes verified against the live backend. */
+import { recordVendorImages } from '@/features/vendors/image-trust';
 import type { PlatformStats, Review, Vendor } from '@/features/vendors/vendors.types';
 import { api } from '@/lib/api/client';
+import { normalizeEmail, normalizePkPhone } from '@/lib/pk';
 
 interface Pagination {
   page: number;
@@ -38,8 +40,20 @@ export async function listBusinesses(params: ListParams = {}): Promise<VendorPag
 
   const res = await api.get<{ data: Vendor[]; pagination: Pagination }>(url, { params: query });
   const pagination = res.pagination ?? { page, limit, total: 0, totalPages: 1 };
+  const vendors = res.data ?? [];
+
+  /**
+   * Every listing passes through here, which makes it the one place that can
+   * notice the same photograph attached to two different businesses. 55% of the
+   * images on production's most-viewed listings are shared stock; recording them
+   * as they arrive lets `vendorPrimaryImage` stop presenting one business's
+   * picture as another's, at zero extra request cost. See
+   * `features/vendors/image-trust.ts`.
+   */
+  recordVendorImages(vendors);
+
   return {
-    vendors: res.data ?? [],
+    vendors,
     page: pagination.page,
     totalPages: pagination.totalPages,
     total: pagination.total,
@@ -105,17 +119,79 @@ export async function getAvailability(
   }
 }
 
+/**
+ * Public vendor inquiry — `POST /leads/inquiry`, no auth.
+ *
+ * ── This was broken on live production, silently, for every app user ────
+ *
+ * The backend (`leadController.submitInquiry`) reads exactly these keys:
+ *
+ *     contactName  ?? name      contactPhone ?? phone
+ *     contactEmail ?? email     message      ?? inquiry
+ *     businessId   eventType    eventDate    estimatedGuests    website
+ *
+ * The app was sending `phoneNumber` and `guestCount`. Neither is an accepted
+ * alias, so both were dropped on the floor — and because `assessContactability`
+ * then saw no phone AND no email, every inquiry came back
+ *
+ *     400 "Please share a phone number or email so the vendor can reply"
+ *
+ * to a customer who had just typed their phone number. Discovery → contact is
+ * the marketplace's core transaction and it failed 100% of the time from the
+ * app, while the web form beside it worked.
+ *
+ * The interface below therefore uses the WIRE names, not friendlier ones. A
+ * pretty local name that has to be mapped is exactly how this drifted: the
+ * mapping is the thing that goes wrong, so there is no mapping.
+ */
 export interface InquiryPayload {
   businessId: number;
-  name?: string;
-  phoneNumber?: string;
-  email?: string;
+  contactName?: string;
+  /** `contactPhone`, never `phoneNumber`. The backend does not know that key. */
+  contactPhone?: string;
+  contactEmail?: string;
   eventType?: string;
+  /** `YYYY-MM-DD`; the backend clips to 10 characters. */
   eventDate?: string;
-  guestCount?: number;
+  /** `estimatedGuests`, never `guestCount`. */
+  estimatedGuests?: number;
   message?: string;
 }
 
-export async function submitInquiry(payload: InquiryPayload): Promise<void> {
-  await api.post('/leads/inquiry', payload);
+/**
+ * What came back. `vendorOnPlatform: false` means the listing is one of the
+ * 3,268 unclaimed OSM imports whose owner has never logged in — the inquiry is
+ * filed, but nobody is going to read it. The confirmation has to say the
+ * matching thing rather than promising a reply that cannot come.
+ */
+export interface InquiryResult {
+  leadId?: number;
+  /** Absent on an older backend deploy → assume claimed, which is how this
+   *  behaved before the field existed. */
+  vendorOnPlatform: boolean;
+}
+
+export async function submitInquiry(payload: InquiryPayload): Promise<InquiryResult> {
+  const res = await api.post<{ leadId?: number; vendorOnPlatform?: boolean } | null>('/leads/inquiry', {
+    businessId: Number(payload.businessId),
+    contactName: payload.contactName?.trim() || undefined,
+    // Normalised to the one canonical PK shape, so an inquiry and an account
+    // for the same person can still be matched later.
+    contactPhone: payload.contactPhone?.trim()
+      ? normalizePkPhone(payload.contactPhone)
+      : undefined,
+    contactEmail: payload.contactEmail?.trim() ? normalizeEmail(payload.contactEmail) : undefined,
+    eventType: payload.eventType || undefined,
+    eventDate: payload.eventDate || undefined,
+    estimatedGuests:
+      Number.isFinite(payload.estimatedGuests) && (payload.estimatedGuests ?? 0) > 0
+        ? Number(payload.estimatedGuests)
+        : undefined,
+    message: payload.message?.trim() || undefined,
+    // Honeypot, as the web sends it. The backend returns a cheerful 200 to
+    // anything that fills this, so bots cannot probe which submissions landed.
+    // It must always be empty — there is no UI that can set it.
+    website: '',
+  });
+  return { leadId: res?.leadId, vendorOnPlatform: res?.vendorOnPlatform !== false };
 }

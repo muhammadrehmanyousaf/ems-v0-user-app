@@ -1,10 +1,25 @@
-/** EmptyState — bridal empty/placeholder with optional CTA, framed by the
- *  Mehrab arch signature. */
+/**
+ * EmptyState — **v4.**
+ *
+ * Governed by rules.md §0.0. Sheet row: `components/ui/EmptyState.tsx`.
+ *
+ * v3 centred a 64px gold-washed circle holding a gold icon, over a title, over
+ * a message, over a gold button. Four elements, three of them gold, to say
+ * "there is nothing here" — the loudest thing on the screen was the absence.
+ *
+ * v4 states it in type, the way the reference states everything: a **title on
+ * the display face**, one quiet line, and a single outlined action. The icon
+ * survives at a small size in muted ink, because a shape helps the eye land,
+ * but it is no longer a coloured medallion.
+ *
+ * Copy law §3 applies here more than anywhere: an empty state must say what
+ * happened AND what to do. The `actionLabel` is not decoration — a dead end with
+ * no way out is the failure this component exists to prevent.
+ */
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { View } from 'react-native';
 
-import { ArchOutline } from '@/components/signature';
-import { goldScale, useTheme } from '@/theme';
+import { layout, useTheme } from '@/theme';
 
 import { Button } from './Button';
 import { Text } from './Text';
@@ -19,37 +34,58 @@ export interface EmptyStateProps {
   urdu?: boolean;
 }
 
-export function EmptyState({ icon = 'sparkles-outline', title, message, actionLabel, onAction, urdu }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  title,
+  message,
+  actionLabel,
+  onAction,
+  urdu,
+}: EmptyStateProps) {
   const t = useTheme();
+
   return (
-    <View style={{ alignItems: 'center', padding: t.spacing['2xl'], gap: t.spacing.md }}>
-      <View style={{ width: 84, height: 94, alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}>
-        <ArchOutline width={84} height={94} color={goldScale.hairline} strokeWidth={1.5} style={{ position: 'absolute' }} />
-        <View
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 26,
-            backgroundColor: goldScale.subtle,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 12,
-          }}
-        >
-          <Ionicons name={icon} size={26} color={t.colors.goldDark} />
-        </View>
-      </View>
-      <Text variant="h3" align="center" urdu={urdu}>
+    <View
+      style={{
+        alignItems: 'center',
+        paddingHorizontal: layout.gutter,
+        // `vast` (64): an empty state is a moment, and a moment needs room.
+        paddingVertical: t.spacing.vast,
+        gap: t.spacing.md,
+      }}
+    >
+      {icon ? (
+        <Ionicons
+          name={icon}
+          size={26}
+          color={t.colors.textFaint}
+          style={{ marginBottom: t.spacing.xs }}
+        />
+      ) : null}
+
+      <Text variant="h2" align="center" urdu={urdu}>
         {title}
       </Text>
+
       {message ? (
-        <Text variant="body" tone="muted" align="center" urdu={urdu}>
+        <Text
+          variant="body"
+          tone="muted"
+          align="center"
+          urdu={urdu}
+          // Stops a long sentence running the full width of a tablet, which is
+          // where centred copy becomes unreadable.
+          style={{ maxWidth: 320 }}
+        >
           {message}
         </Text>
       ) : null}
+
       {actionLabel && onAction ? (
-        <View style={{ marginTop: t.spacing.sm }}>
-          <Button label={actionLabel} onPress={onAction} variant="secondary" urdu={urdu} />
+        <View style={{ marginTop: t.spacing.md }}>
+          {/* `secondary`: an empty state is a recovery, not the screen's
+              primary action, so it does not spend the gold. */}
+          <Button label={actionLabel} variant="secondary" onPress={onAction} urdu={urdu} />
         </View>
       ) : null}
     </View>

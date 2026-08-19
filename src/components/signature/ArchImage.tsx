@@ -41,8 +41,13 @@ export function ArchImage({
             <Path d={d} />
           </ClipPath>
         </Defs>
-        {/* Sand fill shows through as a graceful placeholder before/without an image. */}
-        <Path d={d} fill={palette.sand} />
+        {/* The fill shows through as a graceful placeholder before/without an
+            image — which, at ~98% unclaimed listings, is the COMMON path.
+            `palette.sand` was a v3 alias marked `@deprecated use sunken`; it
+            resolves to the same colour today, but a deprecated token in the
+            brand's structural signature is how a component quietly gets left
+            behind the next time the palette moves. */}
+        <Path d={d} fill={palette.sunken} />
         {uri ? (
           <SvgImage
             href={{ uri }}

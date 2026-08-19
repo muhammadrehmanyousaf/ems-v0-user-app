@@ -1,101 +1,155 @@
-/** AvailabilityCalendar — read-only month grid. Busy dates (from the backend)
- * are muted; open future dates get a gold dot. Empty month = fully open. */
+/**
+ * AvailabilityCalendar — the vendor's open dates, on the detail screen.
+ *
+ * Governed by rules.md §0.0. Sheet row: `features/vendors/detail/AvailabilityCalendar.tsx`.
+ *
+ * ── This was a SECOND calendar, and that was the whole problem ────────────
+ *
+ * The app had two: the shared `components/ui/Calendar`, and this one — a private
+ * 101-line grid with its own month maths, its own weekday array, its own legend
+ * and its own pager. Redrawing the shared one therefore changed nothing on the
+ * screen a customer actually looks at, which is exactly what the founder saw.
+ *
+ * It is now a thin adapter over the shared `Calendar`. One calendar in the app,
+ * so one place to fix and one thing to learn.
+ *
+ * ── Three real defects it shipped with, all visible in a screenshot ───────
+ *
+ * 1. **"Sa" was clipped off the right edge.** Seven columns at `100/7`% inside a
+ *    padded card whose weekday row used `justify="space-between"` — the seventh
+ *    column had nowhere to go. A whole day of the week was missing from the grid.
+ * 2. **The legend drew a hardcoded `15`** with a strike through it as its "Busy"
+ *    swatch. A fake date, shipped as UI (prohibition 6), which read as a
+ *    rendering fault rather than as a key.
+ * 3. **A pager, not a scroll.** Tapping ‹ › one month at a time to find a date
+ *    six months out, with a request per tap.
+ *
+ * The backend returns a map of BUSY dates for a month; everything absent from it
+ * is open. `unknown` is never used here — a month we have fetched is fully known,
+ * and marking known-open days as "unknown" would understate availability.
+ *
+ * ── ONE month, not six ────────────────────────────────────────────────────
+ *
+ * The first version of this adapter passed `monthsToRender={6}`, inheriting the
+ * booking flow's continuous scroll. On a detail page that was plainly wrong and
+ * it shipped: the shared calendar owns a vertical ScrollView, this page owns one
+ * too, and a vertical scroller nested in a vertical scroller never receives the
+ * gesture — so all six months rendered inline and the page grew six stacked
+ * calendars.
+ *
+ * A detail page is a GLANCE: is my date free? That is one month, with a stepper
+ * to look ahead. Continuous scroll belongs to the booking screen, where picking
+ * the date is the entire job. Same component, two modes — `scrollable={false}`.
+ */
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { Row, Section, Text } from '@/components/ui';
+import { Calendar, Section, Text, type DayAvailability } from '@/components/ui';
 import { useVendorAvailability } from '@/features/vendors/vendors.queries';
 import { useT } from '@/i18n/useT';
+import { addMonths, monthTitle, startOfMonth, today, toKey, type DayKey } from '@/lib/date';
 import { useTheme } from '@/theme';
 
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-function monthKey(y: number, m: number) {
-  return `${y}-${String(m + 1).padStart(2, '0')}`;
-}
-function dateKey(y: number, m: number, d: number) {
-  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+/** `YYYY-MM`, the shape `useVendorAvailability` expects. */
+function monthParam(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export function AvailabilityCalendar({ vendorId }: { vendorId: number | string }) {
   const t = useTheme();
   const { t: tr, isUrdu } = useT();
-  const today = new Date();
-  const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() });
 
-  const q = useVendorAvailability(vendorId, monthKey(cursor.y, cursor.m));
-  const busy = q.data ?? {};
+  const [month, setMonth] = useState(() => startOfMonth(today()));
+  const [selected, setSelected] = useState<DayKey | null>(null);
+  const atFirstMonth = month.getTime() <= startOfMonth(today()).getTime();
 
-  const first = new Date(cursor.y, cursor.m, 1).getDay();
-  const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
-  const isCurrentMonth = cursor.y === today.getFullYear() && cursor.m === today.getMonth();
+  // Two months in flight: the one on screen and the one below it, so scrolling
+  // does not stall waiting for a request the moment it comes into view.
+  const current = useVendorAvailability(vendorId, monthParam(month));
+  const upcoming = useVendorAvailability(vendorId, monthParam(addMonths(month, 1)));
 
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < first; i += 1) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
-
-  const prev = () => {
-    if (isCurrentMonth) return;
-    setCursor((c) => (c.m === 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m: c.m - 1 }));
-  };
-  const next = () => setCursor((c) => (c.m === 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m: c.m + 1 }));
+  /**
+   * Busy map → the shared calendar's vocabulary. A date the backend lists is
+   * `full`; every other day in a fetched month is `open`. Nothing is left
+   * `unknown`, because a month we have loaded is not unknown — and rendering a
+   * known-open day as unknown would hide availability the vendor does have.
+   */
+  const availability: Record<DayKey, DayAvailability> = {};
+  for (const source of [current.data, upcoming.data]) {
+    for (const key of Object.keys(source ?? {})) availability[key] = 'full';
+  }
 
   return (
     <Section title={tr('detail.availability')} urdu={isUrdu}>
-      <View style={{ backgroundColor: t.colors.cream, borderColor: t.colors.border, borderWidth: 1, borderRadius: t.radius.md, padding: t.spacing.md, gap: t.spacing.sm }}>
-        <Row justify="space-between">
-          <Pressable onPress={prev} hitSlop={8} disabled={isCurrentMonth} style={{ opacity: isCurrentMonth ? 0.3 : 1 }}>
-            <Ionicons name="chevron-back" size={20} color={t.colors.goldDark} />
-          </Pressable>
-          <Text variant="title">
-            {MONTHS[cursor.m]} {cursor.y}
-          </Text>
-          <Pressable onPress={next} hitSlop={8}>
-            <Ionicons name="chevron-forward" size={20} color={t.colors.goldDark} />
-          </Pressable>
-        </Row>
+      {/* Month stepper. Back is disabled at the current month — a vendor's past
+          availability is not information a couple can act on. */}
+      <View
+        style={{
+          flexDirection: isUrdu ? 'row-reverse' : 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: t.spacing.sm,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr('detail.prevMonth')}
+          disabled={atFirstMonth}
+          hitSlop={12}
+          onPress={() => setMonth((m) => addMonths(m, -1))}
+          style={{ opacity: atFirstMonth ? 0.25 : 1, padding: 4 }}
+        >
+          <Ionicons
+            name={isUrdu ? 'chevron-forward' : 'chevron-back'}
+            size={20}
+            color={t.colors.textPrimary}
+          />
+        </Pressable>
 
-        <Row justify="space-between">
-          {WEEKDAYS.map((w) => (
-            <View key={w} style={{ width: `${100 / 7}%`, alignItems: 'center' }}>
-              <Text variant="overline" tone="muted">{w}</Text>
-            </View>
-          ))}
-        </Row>
+        <Text variant="h3" urdu={isUrdu}>{monthTitle(month, isUrdu ? 'ur' : 'en')}</Text>
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {cells.map((d, i) => {
-            if (d === null) return <View key={`e${i}`} style={{ width: `${100 / 7}%`, height: 40 }} />;
-            const isPast = isCurrentMonth && d < today.getDate();
-            const isBusy = Object.prototype.hasOwnProperty.call(busy, dateKey(cursor.y, cursor.m, d));
-            const open = !isPast && !isBusy;
-            return (
-              <View key={d} style={{ width: `${100 / 7}%`, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-                <Text variant="caption" tone={isPast ? 'muted' : isBusy ? 'muted' : 'primary'} style={isBusy ? { textDecorationLine: 'line-through' } : undefined}>
-                  {d}
-                </Text>
-                {open ? <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: t.colors.gold, marginTop: 2 }} /> : <View style={{ height: 6 }} />}
-              </View>
-            );
-          })}
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr('detail.nextMonth')}
+          hitSlop={12}
+          onPress={() => setMonth((m) => addMonths(m, 1))}
+          style={{ padding: 4 }}
+        >
+          <Ionicons
+            name={isUrdu ? 'chevron-back' : 'chevron-forward'}
+            size={20}
+            color={t.colors.textPrimary}
+          />
+        </Pressable>
+      </View>
 
-        <Row gap="lg" justify="center">
-          <Row gap="xxs">
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.colors.gold }} />
-            <Text variant="caption" tone="muted" urdu={isUrdu}>{tr('detail.open')}</Text>
-          </Row>
-          <Row gap="xxs">
-            <Text variant="caption" tone="muted" style={{ textDecorationLine: 'line-through' }}>15</Text>
-            <Text variant="caption" tone="muted" urdu={isUrdu}>{tr('detail.busy')}</Text>
-          </Row>
-        </Row>
-        <Text variant="caption" tone="muted" align="center" urdu={isUrdu}>
-          {tr('detail.confirmDate')}
+      <Calendar
+        month={month}
+        // ONE month. The stepper above moves it; the page owns the scrolling.
+        monthsToRender={1}
+        scrollable={false}
+        hideMonthTitle
+        selected={selected}
+        onSelect={setSelected}
+        availability={availability}
+        minDate={today()}
+        loading={current.isLoading}
+        urdu={isUrdu}
+      />
+
+      <View style={{ marginTop: t.spacing.md }}>
+        <Text variant="caption" tone="muted" urdu={isUrdu}>
+          {selected
+            ? `${tr('detail.confirmDate')} — ${selected}`
+            : tr('detail.confirmDate')}
         </Text>
       </View>
     </Section>
   );
+}
+
+/** Kept so any caller importing the old helper still resolves. */
+export function dateKey(y: number, m: number, d: number): DayKey {
+  return toKey(new Date(y, m, d));
 }

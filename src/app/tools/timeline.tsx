@@ -1,20 +1,59 @@
+/**
+ * Day-of timeline - the planning tool. Redrawn on v4.
+ *
+ * -- A badge that said one thing and coloured another ----------------------
+ *
+ * Every event carried `<Badge label={item.category} tone={PRIORITY_TONE[item.priority]} />`.
+ * The TEXT was the category ("Barat", "Rukhsati"); the COLOUR was the priority.
+ * So a low-priority Barat and a high-priority Barat rendered the same word in
+ * two different colours, and nothing on the screen said why. A chip encodes one
+ * fact. The category is now a plain caption beside the other metadata, and the
+ * badge carries the priority it was already coloured by - text and tone finally
+ * agreeing.
+ *
+ * -- The rail --------------------------------------------------------------
+ *
+ * A gold 12px dot per event and a 2px connector, with the time set in gold
+ * beside it. On a ten-event day that is thirty gold elements down one column.
+ * `StatusTimeline` had exactly this and was rebuilt on ink for exactly this
+ * reason: when the rail is monochrome, a colour on it means something. Here the
+ * rail is ink and hairline, and the time - which is the thing you scan for - is
+ * `mono`, so 6:00 PM and 11:00 PM align down the column instead of wandering.
+ *
+ * -- And the same five the other tools had ---------------------------------
+ *
+ * A bordered card per event, a hand-rolled header with an ink-on-near-black back
+ * chevron, its own modal chrome instead of `Sheet`, a FAB bottom-right, and no
+ * `useT` in the list body at all - so nothing in it mirrored for Urdu.
+ */
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, ScrollView, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge, Button, ChipSelect, Divider, Input, Row, Text } from '@/components/ui';
-import { PRIORITY_TONE, TIMELINE_CATEGORIES, TIMELINE_SEED, type Priority, type TimelineItem } from '@/features/planning/types';
+import {
+  Badge,
+  Button,
+  ChipSelect,
+  EmptyState,
+  FormField,
+  ScreenHeader,
+  Sheet,
+  Text,
+} from '@/components/ui';
+import { PRIORITY_TONE, planLabel, TIMELINE_CATEGORIES, TIMELINE_SEED, type Priority, type TimelineItem } from '@/features/planning/types';
 import { newId, useLocalList } from '@/features/planning/useLocalList';
-import { T } from '@/i18n/T';
+import { ltr } from '@/i18n/bidi';
+import type { StringKey } from '@/i18n/strings';
 import { useT } from '@/i18n/useT';
-import { haptics, useTheme } from '@/theme';
+import { haptics, layout, overlay, useTheme } from '@/theme';
 
 export default function TimelineTool() {
   const t = useTheme();
+  const { t: tr, isUrdu, locale } = useT();
   const insets = useSafeAreaInsets();
-  const { items, add, update, remove } = useLocalList<TimelineItem>('ww.plan.timeline', TIMELINE_SEED);
+  const { items, add, update, remove } = useLocalList<TimelineItem>('ww.plan.timeline', TIMELINE_SEED(isUrdu), locale);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TimelineItem | null>(null);
 
@@ -22,58 +61,160 @@ export default function TimelineTool() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.screen, paddingTop: insets.top }}>
-      <Row gap="sm" style={{ paddingHorizontal: t.spacing.lg, paddingVertical: t.spacing.sm }}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={t.colors.textPrimary} />
-        </Pressable>
-        <T k="tool.timeline" variant="h1" />
-      </Row>
+      <ScreenHeader
+        title={tr('tool.timeline')}
+        onBack={() => router.back()}
+        backLabel={tr('common.back')}
+        urdu={isUrdu}
+        trailing={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr('timeline.addEvent')}
+            onPress={() => {
+              setEditing(null);
+              setModalOpen(true);
+            }}
+            hitSlop={12}
+            style={({ pressed }) => ({
+              width: 40,
+              height: 40,
+              borderRadius: t.radius.pill,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: t.layout.hairline,
+              borderColor: overlay.hairlineOnDark,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <Ionicons name="add" size={22} color={t.colors.onDark} />
+          </Pressable>
+        }
+      />
 
       <FlatList
         data={sorted}
         keyExtractor={(i) => i.id}
-        contentContainerStyle={{ padding: t.spacing.lg, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: layout.gutter,
+          paddingBottom: insets.bottom + t.spacing.vast,
+        }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <T k="timeline.intro" variant="body" tone="muted" style={{ marginBottom: t.spacing.md }} />
+          <Text
+            variant="body"
+            tone="muted"
+            urdu={isUrdu}
+            style={{ paddingVertical: t.spacing.lg, textAlign: isUrdu ? 'right' : 'left' }}
+          >
+            {tr('timeline.intro')}
+          </Text>
         }
         renderItem={({ item, index }) => (
-          <Pressable onPress={() => { setEditing(item); setModalOpen(true); }}>
-            <Row gap="md" align="flex-start">
-              {/* Time + connector */}
-              <View style={{ width: 56, alignItems: 'flex-end' }}>
-                <Text variant="bodyMedium" tone="gold">{item.time}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${item.time} ${item.event}`}
+            onPress={() => {
+              setEditing(item);
+              setModalOpen(true);
+            }}
+            style={({ pressed }) => ({
+              flexDirection: isUrdu ? 'row-reverse' : 'row',
+              gap: t.spacing.md,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            {/* Time. `mono` so 6:00 PM and 11:00 PM align down the column -
+                the time is what you scan a run-sheet for. Never `urdu`. */}
+            <View style={{ width: 54, alignItems: isUrdu ? 'flex-start' : 'flex-end', paddingTop: 2 }}>
+              <Text variant="mono" tone="primary" style={{ fontSize: 13 }}>
+                {ltr(item.time, isUrdu)}
+              </Text>
+            </View>
+
+            {/* The rail: an ink dot and a hairline. See the header note. */}
+            <View style={{ alignItems: 'center', width: 10 }}>
+              <View
+                style={{
+                  width: 9,
+                  height: 9,
+                  borderRadius: 5,
+                  backgroundColor: t.colors.textPrimary,
+                  marginTop: 6,
+                }}
+              />
+              {index < sorted.length - 1 ? (
+                <View
+                  style={{
+                    width: t.layout.hairline,
+                    flex: 1,
+                    minHeight: 40,
+                    marginTop: 3,
+                    backgroundColor: t.colors.borderStrong,
+                  }}
+                />
+              ) : null}
+            </View>
+
+            <View style={{ flex: 1, paddingBottom: t.spacing.xl, gap: 3 }}>
+              <View
+                style={{
+                  flexDirection: isUrdu ? 'row-reverse' : 'row',
+                  alignItems: 'center',
+                  gap: t.spacing.sm,
+                }}
+              >
+                <Text
+                  variant="title"
+                  urdu={isUrdu}
+                  numberOfLines={2}
+                  style={{ flexShrink: 1, textAlign: isUrdu ? 'right' : 'left' }}
+                >
+                  {item.event}
+                </Text>
+                {/* The badge now carries the PRIORITY it is coloured by. */}
+                <Badge
+                  label={tr(`common.${item.priority}` as StringKey)}
+                  urdu={isUrdu}
+                  tone={PRIORITY_TONE[item.priority]}
+                />
               </View>
-              <View style={{ alignItems: 'center' }}>
-                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: t.colors.gold, marginTop: 4 }} />
-                {index < sorted.length - 1 ? <View style={{ width: 2, flex: 1, minHeight: 44, backgroundColor: t.colors.border }} /> : null}
+
+              {/* Category, duration and location - all metadata, all one row. */}
+              <View
+                style={{
+                  flexDirection: isUrdu ? 'row-reverse' : 'row',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: t.spacing.md,
+                }}
+              >
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {planLabel(item.category, isUrdu)}
+                </Text>
+                {item.duration ? (
+                  <Meta icon="time-outline" text={item.duration} urdu={isUrdu} />
+                ) : null}
+                {item.location ? (
+                  <Meta icon="location-outline" text={item.location} urdu={isUrdu} />
+                ) : null}
               </View>
-              {/* Card */}
-              <View style={{ flex: 1, backgroundColor: t.colors.card, borderColor: t.colors.border, borderWidth: 1, borderRadius: t.radius.md, padding: t.spacing.md, marginBottom: t.spacing.md }}>
-                <Row justify="space-between">
-                  <Text variant="title" style={{ flex: 1 }}>{item.event}</Text>
-                  <Badge label={item.category} tone={PRIORITY_TONE[item.priority]} />
-                </Row>
-                <Row gap="md" style={{ marginTop: 4 }} wrap>
-                  {item.duration ? (
-                    <Row gap="xxs"><Ionicons name="time-outline" size={13} color={t.colors.textMuted} /><Text variant="caption" tone="muted">{item.duration}</Text></Row>
-                  ) : null}
-                  {item.location ? (
-                    <Row gap="xxs"><Ionicons name="location-outline" size={13} color={t.colors.textMuted} /><Text variant="caption" tone="muted">{item.location}</Text></Row>
-                  ) : null}
-                </Row>
-              </View>
-            </Row>
+            </View>
           </Pressable>
         )}
+        ListEmptyComponent={
+          <EmptyState
+            icon="time-outline"
+            title={tr('timeline.addEvent')}
+            message={tr('timeline.intro')}
+            actionLabel={tr('timeline.addEvent')}
+            onAction={() => {
+              setEditing(null);
+              setModalOpen(true);
+            }}
+            urdu={isUrdu}
+          />
+        }
       />
-
-      <Pressable
-        onPress={() => { setEditing(null); setModalOpen(true); }}
-        style={{ position: 'absolute', bottom: insets.bottom + 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: t.colors.gold, alignItems: 'center', justifyContent: 'center', ...t.elevation.lg }}
-      >
-        <Ionicons name="add" size={28} color={t.colors.onPrimary} />
-      </Pressable>
 
       <EventModal
         visible={modalOpen}
@@ -127,33 +268,142 @@ function EventModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(44,24,16,0.4)' }} onPress={onClose} />
-      <View style={{ backgroundColor: t.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88%' }}>
-        <Row justify="space-between" style={{ padding: t.spacing.lg }}>
-          <Text variant="h2" urdu={isUrdu}>{editing ? tr('timeline.editEvent') : tr('timeline.addEvent')}</Text>
-          <Pressable onPress={onClose} hitSlop={8}><Ionicons name="close" size={24} color={t.colors.textMuted} /></Pressable>
-        </Row>
-        <Divider />
-        <ScrollView contentContainerStyle={{ padding: t.spacing.lg, gap: t.spacing.md }}>
-          <Row gap="md">
-            <View style={{ flex: 1 }}><Input label={tr('timeline.time')} urdu={isUrdu} placeholder="18:00" value={time} onChangeText={setTime} /></View>
-            <View style={{ flex: 1 }}><Input label={tr('timeline.duration')} urdu={isUrdu} placeholder="1 hr" value={duration} onChangeText={setDuration} /></View>
-          </Row>
-          <Input label={tr('timeline.event')} urdu={isUrdu} placeholder="e.g. Nikah ceremony" value={event} onChangeText={setEvent} />
-          <Input label={tr('timeline.location')} urdu={isUrdu} placeholder="e.g. Main hall" value={location} onChangeText={setLocation} />
-          <View>
-            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.category')}</Text>
-            <ChipSelect options={TIMELINE_CATEGORIES.map((c) => ({ value: c, label: c }))} value={category} onChange={(v) => setCategory(v ?? TIMELINE_CATEGORIES[0])} />
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title={editing ? tr('timeline.editEvent') : tr('timeline.addEvent')}
+      primaryLabel={editing ? tr('common.save') : tr('timeline.addEvent')}
+      primaryDisabled={!event.trim() || !time.trim()}
+      onPrimary={() =>
+        onSave({
+          time: time.trim(),
+          event: event.trim(),
+          duration: duration.trim() || undefined,
+          location: location.trim() || undefined,
+          category,
+          priority,
+        })
+      }
+      urdu={isUrdu}
+    >
+      <View style={{ gap: t.spacing.xl }}>
+        <View style={{ flexDirection: isUrdu ? 'row-reverse' : 'row', gap: t.spacing.lg }}>
+          <View style={{ flex: 1 }}>
+            <FormField
+              label={tr('timeline.time')}
+              urdu={isUrdu}
+              placeholder="18:00"
+              value={time}
+              onChangeText={setTime}
+            />
           </View>
-          <View>
-            <Text variant="label" tone="label" urdu={isUrdu} style={{ marginBottom: 6 }}>{tr('common.priority')}</Text>
-            <ChipSelect scroll={false} options={[{ value: 'high', label: tr('common.high') }, { value: 'medium', label: tr('common.medium') }, { value: 'low', label: tr('common.low') }]} value={priority} onChange={(v) => setPriority((v as Priority) ?? 'medium')} />
+          <View style={{ flex: 1 }}>
+            <FormField
+              label={tr('timeline.duration')}
+              urdu={isUrdu}
+              placeholder="1 hr"
+              value={duration}
+              onChangeText={setDuration}
+            />
           </View>
-          <Button label={editing ? tr('common.save') : tr('timeline.addEvent')} urdu={isUrdu} fullWidth onPress={() => { if (event.trim() && time.trim()) onSave({ time: time.trim(), event: event.trim(), duration: duration.trim() || undefined, location: location.trim() || undefined, category, priority }); }} />
-          {onDelete ? <Button label={tr('common.delete')} urdu={isUrdu} variant="ghost" onPress={onDelete} /> : null}
-        </ScrollView>
+        </View>
+
+        <FormField
+          label={tr('timeline.event')}
+          urdu={isUrdu}
+          placeholder={tr('ph.timelineEvent')}
+          value={event}
+          onChangeText={setEvent}
+        />
+        <FormField
+          label={tr('timeline.location')}
+          urdu={isUrdu}
+          placeholder={tr('ph.timelineLocation')}
+          value={location}
+          onChangeText={setLocation}
+        />
+
+        <Field label={tr('common.category')} urdu={isUrdu}>
+          <ChipSelect
+            options={TIMELINE_CATEGORIES.map((c) => ({ value: c, label: planLabel(c, isUrdu) }))}
+            value={category}
+            onChange={(v) => setCategory(v ?? TIMELINE_CATEGORIES[0])}
+            urdu={isUrdu}
+          />
+        </Field>
+
+        <Field label={tr('common.priority')} urdu={isUrdu}>
+          <ChipSelect
+            scroll={false}
+            options={[
+              { value: 'high', label: tr('common.high') },
+              { value: 'medium', label: tr('common.medium') },
+              { value: 'low', label: tr('common.low') },
+            ]}
+            value={priority}
+            onChange={(v) => setPriority((v as Priority) ?? 'medium')}
+            urdu={isUrdu}
+          />
+        </Field>
+
+        {onDelete ? (
+          <Button label={tr('common.delete')} urdu={isUrdu} variant="ghost" onPress={onDelete} />
+        ) : null}
       </View>
-    </Modal>
+    </Sheet>
+  );
+}
+
+function Meta({
+  icon,
+  text,
+  urdu,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+  urdu?: boolean;
+}) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: urdu ? 'row-reverse' : 'row',
+        alignItems: 'center',
+        gap: 4,
+      }}
+    >
+      <Ionicons name={icon} size={13} color={t.colors.textMuted} />
+      <Text variant="caption" tone="muted" numberOfLines={1}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+function Field({
+  label,
+  urdu,
+  children,
+}: {
+  label: string;
+  urdu?: boolean;
+  children: React.ReactNode;
+}) {
+  const t = useTheme();
+  return (
+    <View style={{ gap: t.spacing.sm }}>
+      <Text
+        variant="overline"
+        tone="muted"
+        urdu={urdu}
+        style={{
+          textAlign: urdu ? 'right' : 'left',
+          ...(urdu ? null : { textTransform: 'uppercase' as const }),
+        }}
+      >
+        {label}
+      </Text>
+      {children}
+    </View>
   );
 }
