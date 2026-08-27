@@ -43,12 +43,15 @@ import {
   Text,
   type TimelineStep,
   formatRs,
+  toast,
 } from '@/components/ui';
 import { useMyBookings } from '@/features/account/account.queries';
+import { CancelBookingSheet } from '@/features/account/CancelBookingSheet';
 import { ltr } from '@/i18n/bidi';
 import type { StringKey } from '@/i18n/strings';
 import { useT } from '@/i18n/useT';
 import type { Booking } from '@/lib/api/endpoints/account';
+import { canCancel } from '@/lib/api/endpoints/bookingActions';
 import { shortDate, to12h } from '@/lib/date';
 import { useAuthStore } from '@/store/auth';
 import { haptics, layout, useTheme } from '@/theme';
@@ -180,6 +183,16 @@ export default function Bookings() {
   /** One expansion at a time. Two open timelines is a list of two timelines. */
   const [openId, setOpenId] = useState<number | null>(null);
 
+  /**
+   * The booking whose cancel sheet is open, held HERE and not in the row.
+   *
+   * A `Sheet` is a React Native `Modal`; one per row means a `FlatList` of
+   * fifty bookings mounts fifty modals. It also survives the row unmounting as
+   * the list recycles mid-cancel — the whole booking object is captured, not an
+   * id read back out of a list that may already have been invalidated.
+   */
+  const [cancelling, setCancelling] = useState<Booking | null>(null);
+
   const renderItem = useCallback(
     ({ item }: { item: Booking }) => (
       <BookingRow
@@ -188,6 +201,10 @@ export default function Bookings() {
         onToggle={() => {
           haptics.light();
           setOpenId((cur) => (cur === item.id ? null : item.id));
+        }}
+        onCancel={() => {
+          haptics.light();
+          setCancelling(item);
         }}
       />
     ),
@@ -256,6 +273,19 @@ export default function Bookings() {
           }
         />
       )}
+
+      <CancelBookingSheet
+        booking={cancelling}
+        visible={cancelling != null}
+        onClose={() => setCancelling(null)}
+        onCancelled={() => {
+          setCancelling(null);
+          // The list is invalidated by the mutation itself; the toast is the
+          // only confirmation the customer gets that the request landed, and
+          // the row will redraw as cancelled underneath it.
+          toast.success(tr('bookings.cancelDone'));
+        }}
+      />
     </View>
   );
 }
@@ -264,10 +294,12 @@ function BookingRow({
   booking,
   open,
   onToggle,
+  onCancel,
 }: {
   booking: Booking;
   open: boolean;
   onToggle: () => void;
+  onCancel: () => void;
 }) {
   const t = useTheme();
   const { t: tr, isUrdu, locale } = useT();
@@ -452,6 +484,49 @@ function BookingRow({
               </Pressable>
             ) : null}
           </View>
+
+          {/*
+            The one action this screen has ever offered.
+
+            Gated on the BACKEND's rule — `cancelBooking` accepts only Pending,
+            Confirmed and Awaiting Payment and answers 400 for anything else —
+            rather than the web's looser "not cancelled and not completed",
+            which offers a Declined booking a button that can only fail.
+
+            Deliberately a plain text button in `danger`, not a filled one.
+            Cancelling a wedding booking is a rare, heavy action; a red block
+            sitting under every row makes it look like the thing to do next.
+          */}
+          {canCancel(booking.status) ? (
+            <View>
+              <View
+                style={{
+                  height: layout.hairline,
+                  backgroundColor: t.colors.border,
+                  marginBottom: t.spacing.md,
+                }}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={tr('bookings.cancel')}
+                onPress={onCancel}
+                hitSlop={8}
+                style={({ pressed }) => ({
+                  flexDirection: isUrdu ? 'row-reverse' : 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  alignSelf: isUrdu ? 'flex-end' : 'flex-start',
+                  paddingVertical: t.spacing.sm,
+                  opacity: pressed ? 0.55 : 1,
+                })}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={t.colors.danger} />
+                <Text variant="label" tone="danger" urdu={isUrdu}>
+                  {tr('bookings.cancel')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
       ) : null}
     </View>

@@ -452,6 +452,47 @@ export const STRINGS = {
   'bookings.stepCancelled': { en: 'Cancelled', ur: 'منسوخ' },
   'bookings.stepWaitingVendor': { en: 'Waiting on the vendor', ur: 'وینڈر کے جواب کا انتظار' },
 
+  // ── Cancelling ──────────────────────────────────────────────────────────
+  // A customer cancelling a wedding booking is not clicking a button, they are
+  // making a money decision under stress. Every string here names a number or
+  // an outcome; none of them says "are you sure".
+  'bookings.cancel': { en: 'Cancel booking', ur: 'بکنگ منسوخ کریں' },
+  'bookings.cancelTitle': { en: 'Cancel this booking?', ur: 'یہ بکنگ منسوخ کریں؟' },
+  'bookings.cancelIrreversible': {
+    en: 'This cannot be undone. The date is released back to the vendor.',
+    ur: 'یہ واپس نہیں ہو سکتا۔ تاریخ وینڈر کو واپس مل جائے گی۔',
+  },
+  'bookings.cancelChecking': { en: 'Checking your refund…', ur: 'آپ کی رقم کی واپسی دیکھی جا رہی ہے…' },
+  'bookings.refundYouGetBack': { en: 'You’ll get back', ur: 'آپ کو واپس ملے گا' },
+  'bookings.refundForfeited': { en: 'Forfeited under the vendor’s policy', ur: 'وینڈر کی پالیسی کے تحت ضبط' },
+  'bookings.refundPaidSoFar': { en: 'Paid so far', ur: 'اب تک ادا شدہ' },
+  // Composed around the day count — `useT` has no interpolation, so the screen
+  // joins these two around the number rather than shipping a template.
+  'bookings.refundDaysPre': { en: 'Cancelling', ur: 'تقریب سے' },
+  'bookings.refundDaysPostOne': { en: 'day before the event.', ur: 'دن پہلے منسوخ کیا جا رہا ہے۔' },
+  'bookings.refundDaysPost': { en: 'days before the event.', ur: 'دن پہلے منسوخ کیا جا رہا ہے۔' },
+  'bookings.refundToday': { en: 'Cancelling on the day of the event.', ur: 'تقریب کے دن منسوخ کیا جا رہا ہے۔' },
+  // Shown when nothing was ever paid — a Rs 0 refund row would read as a loss.
+  'bookings.cancelNothingPaid': {
+    en: 'You haven’t paid anything on this booking, so there is nothing to refund.',
+    ur: 'آپ نے اس بکنگ پر کچھ ادا نہیں کیا، اس لیے واپسی کے لیے کچھ نہیں ہے۔',
+  },
+  // Shown when the refund engine is off for this vendor (404) — we genuinely do
+  // not know the figure, and saying so is not the same as saying zero.
+  'bookings.cancelPolicyUnknown': {
+    en: 'Any payment you have made is subject to the vendor’s refund policy. Your vendor will confirm the amount.',
+    ur: 'آپ کی ادا کردہ رقم وینڈر کی واپسی پالیسی کے تابع ہے۔ رقم کی تصدیق وینڈر کرے گا۔',
+  },
+  'bookings.cancelReason': { en: 'Reason (optional)', ur: 'وجہ (اختیاری)' },
+  'bookings.cancelReasonHint': {
+    en: 'The vendor sees this. A line is enough.',
+    ur: 'وینڈر یہ دیکھے گا۔ ایک سطر کافی ہے۔',
+  },
+  'bookings.cancelConfirm': { en: 'Yes, cancel', ur: 'ہاں، منسوخ کریں' },
+  'bookings.cancelKeep': { en: 'Keep booking', ur: 'بکنگ رہنے دیں' },
+  'bookings.cancelDone': { en: 'Booking cancelled', ur: 'بکنگ منسوخ ہو گئی' },
+  'bookings.cancelFailed': { en: 'Couldn’t cancel the booking. Try again.', ur: 'بکنگ منسوخ نہیں ہو سکی۔ دوبارہ کوشش کریں۔' },
+
   // Guides
   'guides.title': { en: 'Wedding guides', ur: 'شادی گائیڈز' },
   'guides.subtitle': { en: 'Everything you need to plan your shaadi — from costs to rasms.', ur: 'اپنی شادی کی منصوبہ بندی کے لیے سب کچھ — اخراجات سے رسموں تک۔' },
