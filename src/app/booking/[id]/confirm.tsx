@@ -72,7 +72,32 @@ function advanceFor(total: number, amount: unknown, type: unknown): number {
 export default function BookingConfirmScreen() {
   const t = useTheme();
   const { t: tr, isUrdu, locale } = useT();
-  const { id, date, time } = useLocalSearchParams<{ id: string; date: string; time: string }>();
+  const { id, date, time, slotTemplateId, subVenueId } = useLocalSearchParams<{
+    id: string;
+    date: string;
+    time: string;
+    /** WW-APPSPACE — both cross the route boundary as strings, and are absent
+     *  entirely for a legacy-period slot or a venue with no halls modelled. */
+    slotTemplateId?: string;
+    subVenueId?: string;
+  }>();
+
+  /**
+   * Parse a route param that is meant to be an id.
+   *
+   * Returns null for anything that is not a real number, which covers the
+   * absent case AND the string "undefined" — expo-router hands that back when a
+   * param is set to an undefined value rather than omitted, and `Number()` turns
+   * it into NaN. A NaN in the payload reaches the server as `null` after JSON
+   * serialisation on some paths and as nothing on others, so it is pinned here.
+   */
+  const idParam = (v?: string): number | null => {
+    if (v == null || v === '' || v === 'undefined' || v === 'null') return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const pickedSlotTemplateId = idParam(slotTemplateId);
+  const pickedSubVenueId = idParam(subVenueId);
   const user = useAuthStore((s) => s.user);
 
   const vendorQ = useVendor(id);
@@ -159,6 +184,13 @@ export default function BookingConfirmScreen() {
             totalAmount: total,
             downPayment: advance,
             specialRequests: notes.trim(),
+            // WW-APPSPACE — the slot's identity, not just its clock time. Both
+            // are omitted when the slot has neither, which is the legacy-period
+            // case and the case of a venue with no halls modelled.
+            ...(pickedSlotTemplateId != null
+              ? { slotTemplateId: pickedSlotTemplateId }
+              : {}),
+            ...(pickedSubVenueId != null ? { subVenueId: pickedSubVenueId } : {}),
           },
         ],
       }),

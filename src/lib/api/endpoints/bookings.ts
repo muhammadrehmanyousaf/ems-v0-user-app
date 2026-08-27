@@ -46,6 +46,18 @@ export interface BookingVendorEntry {
   specialRequests?: string;
   /** ONLY for template-engine vendors. Never mix within one cart. */
   slotTemplateId?: number;
+  /**
+   * WW-APPSPACE — which hall this line is booked into.
+   *
+   * The backend resolves a line's space from an explicit `subVenueId` first,
+   * then from `resourceId`, then — only when the venue has exactly one bookable
+   * space — automatically. A multi-space venue with no pick stays UNASSIGNED,
+   * and an unassigned booking blocks every hall on the availability grid,
+   * because the system will not guess which hall a wedding is in.
+   *
+   * Omitted, not null, when there is nothing to name.
+   */
+  subVenueId?: number;
 }
 
 export interface CreateBookingInput {
@@ -97,6 +109,10 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
       };
       // Present only when this vendor is on the template engine.
       if (v.slotTemplateId != null) entry.slotTemplateId = Number(v.slotTemplateId);
+      // Present only when a specific hall was picked. Rule 1 applies — omitted,
+      // never sent as null: an explicit null is a different request from an
+      // absent key, and the backend's space resolver branches on presence.
+      if (v.subVenueId != null) entry.subVenueId = Number(v.subVenueId);
       return entry;
     }),
   };

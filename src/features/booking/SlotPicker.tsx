@@ -111,6 +111,26 @@ export interface SlotSelection {
   label: string;
   startTime: string;
   endTime: string;
+  /**
+   * WW-APPSPACE — the hall this slot belongs to, carried through to the booking.
+   *
+   * `SlotAvailabilityRow` has always known which space a template row belongs
+   * to, and this type dropped it, so the booking that came out of a hall-
+   * specific slot did not say which hall it was in.
+   *
+   * That is not cosmetic. The venue availability grid runs with
+   * `blockOnUnassigned: true` — a booking whose hall is unknown blocks EVERY
+   * hall, because the system cannot honestly call a hall free when it does not
+   * know where the wedding is. On production 472 of 632 booking lines at
+   * space-managed venues carry no space, which is why a two-hall venue's space
+   * calendar reads like a whole-venue calendar and why per-hall P&L had nothing
+   * to attribute.
+   *
+   * NULL stays meaningful: a venue-wide slot, or a venue with no halls modelled,
+   * genuinely has no space to name. Guessing one would put a wrong answer on the
+   * vendor's calendar, and a wrong answer is worse than an honest blank.
+   */
+  subVenueId?: number | null;
 }
 
 export interface SlotPickerProps {
@@ -159,6 +179,8 @@ export function SlotPicker({ rows, selected, onSelect, guestCount, urdu }: SlotP
                   label: r.label,
                   startTime: r.startTime,
                   endTime: r.endTime,
+                  // The row already knows its hall. Carry it; don't drop it.
+                  subVenueId: r.subVenueId ?? null,
                 })
               }
               urdu={urdu}

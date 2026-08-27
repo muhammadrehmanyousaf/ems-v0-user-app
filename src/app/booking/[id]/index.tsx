@@ -247,9 +247,43 @@ export default function BookingDateScreen() {
            *
            * Nothing is written here — no hold, no booking, no money row.
            */
+          /**
+           * WW-APPSPACE — carry the slot's IDENTITY, not just its clock time.
+           *
+           * This passed `time` alone, so everything else about the chosen slot
+           * was discarded at the route boundary: confirm received a string like
+           * "18:00" and built the booking from that. Two things were lost, and
+           * both matter on the server:
+           *
+           *   slotTemplateId — the capacity-aware engine keys on it. Without it
+           *     a template-engine venue's booking is treated as a legacy period,
+           *     so the per-slot capacity the vendor configured is not the
+           *     capacity the booking is checked against.
+           *
+           *   subVenueId — which hall. Availability runs with
+           *     `blockOnUnassigned: true`, so a booking that does not name its
+           *     hall blocks EVERY hall. That is the honest default, and it is
+           *     also why a two-hall venue's space calendar currently reads like
+           *     a whole-venue one: 472 of 632 booking lines carry no space.
+           *
+           * Params cross the route boundary as strings, so both are stringified
+           * here and parsed back on the other side. They are OMITTED when absent
+           * rather than sent empty — an empty param arrives as the string
+           * "undefined" and parses to NaN.
+           */
           router.push({
             pathname: '/booking/[id]/confirm',
-            params: { id: String(id), date, time: slot.bookingTime },
+            params: {
+              id: String(id),
+              date,
+              time: slot.bookingTime,
+              ...(slot.slotTemplateId != null
+                ? { slotTemplateId: String(slot.slotTemplateId) }
+                : {}),
+              ...(slot.subVenueId != null
+                ? { subVenueId: String(slot.subVenueId) }
+                : {}),
+            },
           });
         }}
         urdu={isUrdu}
