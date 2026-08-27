@@ -13,6 +13,11 @@ import {
   type ProfileUpdate,
 } from '@/lib/api/endpoints/account';
 import type { UploadFile } from '@/lib/api/endpoints/auth';
+import {
+  cancelBooking,
+  getRefundPreview,
+  type CancelBookingInput,
+} from '@/lib/api/endpoints/bookingActions';
 import { useAuthStore } from '@/store/auth';
 
 export function useProfile() {
@@ -93,5 +98,48 @@ export function useUploadAvatar() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: ({ current, next }: { current: string; next: string }) => changePassword(current, next),
+  });
+}
+
+// ── Cancelling a booking ────────────────────────────────────────────────────
+
+/**
+ * The refund figure, fetched only while the cancel sheet is open.
+ *
+ * `enabled` is the point: this is a live computation against the vendor's
+ * policy and the day count, and it must be current at the moment the customer
+ * decides — not cached from when the list loaded. `staleTime: 0` and no
+ * retry-on-404 (the endpoint answers 404 when the refund engine is off for
+ * that vendor, and `getRefundPreview` turns that into `null`, which is a real
+ * answer the sheet renders differently from "we're still loading").
+ */
+export function useRefundPreview(bookingId: number | null) {
+  const authed = useAuthStore((s) => s.status === 'authenticated');
+  return useQuery({
+    queryKey: ['refund-preview', bookingId],
+    queryFn: () => getRefundPreview(bookingId as number),
+    enabled: authed && bookingId != null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+}
+
+/**
+ * Cancel. Invalidates the bookings list so the row redraws as cancelled, and
+ * the preview so a re-open cannot show the pre-cancellation figure.
+ *
+ * No optimistic update. An optimistic cancel that fails leaves a customer
+ * believing a wedding booking is cancelled when the vendor still holds the
+ * date — the one state this screen must never show.
+ */
+export function useCancelBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CancelBookingInput) => cancelBooking(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bookings'] });
+      qc.invalidateQueries({ queryKey: ['refund-preview'] });
+    },
   });
 }
