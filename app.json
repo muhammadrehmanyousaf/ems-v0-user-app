@@ -39,7 +39,8 @@
       "expo-secure-store",
       "expo-sharing",
       "expo-web-browser",
-      "expo-build-properties"
+      "expo-build-properties",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
