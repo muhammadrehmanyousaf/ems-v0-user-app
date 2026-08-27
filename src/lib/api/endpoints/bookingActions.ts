@@ -158,3 +158,128 @@ export async function cancelBooking({
   // skipped anyway, but an absent key is the honest request.
   await api.patch(`/bookings/${bookingId}/cancel`, trimmed ? { reason: trimmed } : {});
 }
+
+// ── Rescheduling ────────────────────────────────────────────────────────────
+
+/**
+ * Case-insensitive email compare, matching the backend's `sameEmail`.
+ *
+ * Both sides trimmed and lowercased, and a blank never matches a blank — the
+ * backend's own note records a bug where two whitespace-only strings both
+ * normalised to `""` and authorized each other.
+ */
+function sameEmail(a?: string | null, b?: string | null): boolean {
+  const x = String(a ?? '').trim().toLowerCase();
+  const y = String(b ?? '').trim().toLowerCase();
+  return x.length > 0 && x === y;
+}
+
+/**
+ * May THIS account reschedule this booking?
+ *
+ * ── Three endpoints, three different answers to "your booking" ───────────
+ *
+ * Measured against this customer's 7 live production bookings:
+ *
+ *   getSimpleUserBookings   customerUserId OR email OR phone   7 visible
+ *   callerMayPayForBooking  customerUserId OR email            5 payable
+ *   rescheduleBooking       email ONLY                         4 reschedulable
+ *
+ * So a booking can sit in the list, be payable, and still refuse to move.
+ * There is no read-only probe for the reschedule rule the way `booking-status`
+ * probes the pay rule, so this mirrors the server's check exactly rather than
+ * offering a button that 403s.
+ *
+ * Also enforced server-side, and checked here so the customer is not sent into
+ * a form that cannot submit:
+ *   - status must be Pending, Awaiting Payment or Confirmed
+ *   - the event must still be in the future (`event_already_passed`)
+ *   - slot-template bookings are refused outright in v1
+ *     (`slot_mode_reschedule_not_supported`)
+ */
+export function canReschedule(
+  booking: { status?: string; customerEmail?: string; eventDate?: string },
+  accountEmail?: string | null,
+): boolean {
+  if (!sameEmail(booking.customerEmail, accountEmail)) return false;
+  const s = (booking.status ?? '').toLowerCase();
+  if (s !== 'pending' && s !== 'confirmed' && s !== 'awaiting payment') return false;
+  // `bookingDate <= today` is refused by the service. Compared as YYYY-MM-DD
+  // strings, which is what the server holds and compares.
+  if (booking.eventDate) {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    if (booking.eventDate.slice(0, 10) <= todayKey) return false;
+  }
+  return true;
+}
+
+export interface RescheduleInput {
+  bookingId: number;
+  /** `YYYY-MM-DD`. */
+  newBookingDate: string;
+  /** Slot identity, e.g. "18:00" or a legacy period label. */
+  newBookingTime: string;
+}
+
+/**
+ * Every way a reschedule can end, as one type.
+ *
+ * The backend answers failures with `apiResponse(res, status, false,
+ * result.code, result)` — so the ERROR MESSAGE is the machine code itself
+ * (`"requires_top_up"`, `"slot_unavailable"`). Rendering `error.message`
+ * straight onto the screen, which is this app's normal convention, would show
+ * a customer the string `requires_top_up`. Hence the mapping.
+ */
+export type RescheduleOutcome =
+  /** Moved. `refunded` is set when the new date priced LOWER and money came back. */
+  | { kind: 'moved'; refunded?: number }
+  /** New date costs MORE. The diff must be paid before it can move. */
+  | { kind: 'needs_top_up'; diff: number; oldTotal?: number; newTotal?: number }
+  /** Someone else holds that slot now. */
+  | { kind: 'slot_taken' }
+  /** Slot-template vendors are out of scope for v1 reschedule. */
+  | { kind: 'not_supported' }
+  /** The advance-transfer window, a passed event, a bad status — server's words. */
+  | { kind: 'refused'; code: string; message?: string };
+
+const OUTCOME_BY_CODE: Record<string, RescheduleOutcome['kind']> = {
+  requires_top_up: 'needs_top_up',
+  slot_unavailable: 'slot_taken',
+  slot_mode_reschedule_not_supported: 'not_supported',
+};
+
+export async function rescheduleBooking(input: RescheduleInput): Promise<RescheduleOutcome> {
+  try {
+    const res = await api.post<{ refund?: number; refundedAmount?: number }>(
+      `/bookings/${input.bookingId}/reschedule`,
+      {
+        newBookingDate: input.newBookingDate,
+        newBookingTime: input.newBookingTime,
+      },
+    );
+    const refunded = Number(res?.refundedAmount ?? res?.refund ?? 0);
+    return { kind: 'moved', refunded: refunded > 0 ? refunded : undefined };
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    // `message` IS the code on this endpoint's failure path.
+    const code = String(e.message || '');
+    const details = (e.details ?? {}) as {
+      diff?: number;
+      oldTotal?: number;
+      newTotal?: number;
+      code?: string;
+    };
+    const resolved = OUTCOME_BY_CODE[details.code ?? code];
+    if (resolved === 'needs_top_up') {
+      return {
+        kind: 'needs_top_up',
+        diff: Number(details.diff) || 0,
+        oldTotal: details.oldTotal,
+        newTotal: details.newTotal,
+      };
+    }
+    if (resolved === 'slot_taken') return { kind: 'slot_taken' };
+    if (resolved === 'not_supported') return { kind: 'not_supported' };
+    return { kind: 'refused', code: details.code ?? code, message: code };
+  }
+}

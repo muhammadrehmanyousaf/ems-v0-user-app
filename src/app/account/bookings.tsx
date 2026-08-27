@@ -34,6 +34,7 @@ import { FlatList, Pressable, View } from 'react-native';
 
 import {
   Badge,
+  Button,
   type BadgeTone,
   EmptyState,
   MoneyRow,
@@ -47,11 +48,13 @@ import {
 } from '@/components/ui';
 import { useMyBookings } from '@/features/account/account.queries';
 import { CancelBookingSheet } from '@/features/account/CancelBookingSheet';
+import { PayBookingSheet } from '@/features/account/PayBookingSheet';
+import { RescheduleBookingSheet } from '@/features/account/RescheduleBookingSheet';
 import { ltr } from '@/i18n/bidi';
 import type { StringKey } from '@/i18n/strings';
 import { useT } from '@/i18n/useT';
 import type { Booking } from '@/lib/api/endpoints/account';
-import { canCancel } from '@/lib/api/endpoints/bookingActions';
+import { canCancel, canReschedule } from '@/lib/api/endpoints/bookingActions';
 import { shortDate, to12h } from '@/lib/date';
 import { useAuthStore } from '@/store/auth';
 import { haptics, layout, useTheme } from '@/theme';
@@ -103,6 +106,26 @@ function phaseOf(status: string | undefined, paymentStatus: string | undefined):
   const settled = p.includes('paid') || p.includes('complete') || p.includes('success');
   if (s.includes('confirm')) return settled ? 'paid' : 'confirmed';
   return 'requested';
+}
+
+/**
+ * Does this booking still owe money?
+ *
+ * Deliberately includes "Partially Refunded" and "Refunded" in the settled
+ * set. A booking paid in full and then partly refunded owes NOTHING — the
+ * refund is a price reduction, not a debt to make good — and the fall-through
+ * here leads to a DOWN PAYMENT request. Getting it wrong asks a couple for
+ * their deposit again days after we sent them money back.
+ *
+ * The authoritative amounts still come from `booking-status` when the sheet
+ * opens; this only decides whether to offer the button at all.
+ */
+function mayOwe(b: Booking): boolean {
+  const s = (b.status ?? '').toLowerCase();
+  if (s.includes('cancel') || s.includes('complete') || s.includes('declin') || s.includes('reject'))
+    return false;
+  const p = (b.paymentStatus ?? '').trim().toLowerCase();
+  return p !== 'paid' && p !== 'partially refunded' && p !== 'refunded';
 }
 
 function statusTone(phase: Phase): BadgeTone {
@@ -178,6 +201,17 @@ export default function Bookings() {
   const t = useTheme();
   const { t: tr, isUrdu } = useT();
   const authed = useAuthStore((s) => s.status === 'authenticated');
+  /**
+   * The signed-in address, needed to decide whether Change date can succeed.
+   *
+   * `rescheduleBooking` authorizes on `sameEmail(booking.customerEmail,
+   * req.user.email)` ALONE — no customerUserId arm, no vendor arm. It is the
+   * narrowest of the three ownership rules on this data (list: id/email/phone,
+   * pay: id/email, reschedule: email), and unlike the pay rule there is no
+   * read-only endpoint to probe it with. Mirroring it here is the only way to
+   * avoid offering a button that can only 403.
+   */
+  const accountEmail = useAuthStore((s) => s.user?.email);
   const q = useMyBookings();
 
   /** One expansion at a time. Two open timelines is a list of two timelines. */
@@ -193,6 +227,12 @@ export default function Bookings() {
    */
   const [cancelling, setCancelling] = useState<Booking | null>(null);
 
+  /** The booking whose pay sheet is open. Same reasoning as `cancelling`. */
+  const [paying, setPaying] = useState<Booking | null>(null);
+
+  /** The booking whose reschedule sheet is open. */
+  const [moving, setMoving] = useState<Booking | null>(null);
+
   const renderItem = useCallback(
     ({ item }: { item: Booking }) => (
       <BookingRow
@@ -206,9 +246,18 @@ export default function Bookings() {
           haptics.light();
           setCancelling(item);
         }}
+        onPay={() => {
+          haptics.light();
+          setPaying(item);
+        }}
+        onReschedule={() => {
+          haptics.light();
+          setMoving(item);
+        }}
+        accountEmail={accountEmail}
       />
     ),
-    [openId],
+    [openId, accountEmail],
   );
 
   const rows = q.data ?? [];
@@ -274,6 +323,76 @@ export default function Bookings() {
         />
       )}
 
+      <RescheduleBookingSheet
+        booking={moving}
+        visible={moving != null}
+        onClose={() => setMoving(null)}
+        onFinished={(outcome) => {
+          setMoving(null);
+          switch (outcome.kind) {
+            case 'moved':
+              toast.success(
+                tr(outcome.refunded ? 'bookings.rescheduleRefunded' : 'bookings.rescheduleDone'),
+              );
+              q.refetch();
+              break;
+            case 'needs_top_up':
+              // A BILL, not a failure. The date is available; it costs more.
+              toast.info(
+                `${tr('bookings.rescheduleTopUpPre')} ${formatRs(outcome.diff)} ${tr('bookings.rescheduleTopUpPost')}`,
+              );
+              break;
+            case 'not_supported':
+              toast.info(tr('bookings.rescheduleUnsupported'));
+              break;
+            case 'slot_taken':
+              // Handled inside the sheet, which stays open for another pick.
+              break;
+            case 'refused':
+              // The advance-transfer window, a passed event, a bad status. The
+              // server's code is not customer copy, so it does not go on screen.
+              toast.error(tr('bookings.rescheduleFailed'));
+              break;
+          }
+        }}
+      />
+
+      <PayBookingSheet
+        booking={paying}
+        visible={paying != null}
+        onClose={() => setPaying(null)}
+        onFinished={(outcome) => {
+          setPaying(null);
+          // Each ending gets its own words. Three of the four are routinely
+          // mislabelled "payment failed" in apps that have not thought about
+          // it, and one of those three is a customer who HAS paid.
+          switch (outcome.kind) {
+            case 'paid':
+              toast.success(
+                tr(outcome.alreadyProcessed ? 'bookings.payAlreadyDone' : 'bookings.payDone'),
+              );
+              // The webhook may still be in flight; ask again for the truth
+              // rather than writing an optimistic figure into the list.
+              q.refetch();
+              break;
+            case 'not_paid':
+              toast.info(tr('bookings.payNotCompleted'));
+              break;
+            case 'unconfirmed':
+              // Neither success nor failure — and the copy says don't pay twice.
+              toast.info(tr('bookings.payUnconfirmed'));
+              q.refetch();
+              break;
+            case 'bank_transfer':
+              toast.info(tr('bookings.payBankTransfer'));
+              break;
+            case 'nothing_due':
+              toast.info(tr('bookings.paySettled'));
+              break;
+          }
+        }}
+      />
+
       <CancelBookingSheet
         booking={cancelling}
         visible={cancelling != null}
@@ -295,11 +414,18 @@ function BookingRow({
   open,
   onToggle,
   onCancel,
+  onPay,
+  onReschedule,
+  accountEmail,
 }: {
   booking: Booking;
   open: boolean;
   onToggle: () => void;
   onCancel: () => void;
+  onPay: () => void;
+  onReschedule: () => void;
+  /** The signed-in address. Reschedule authorizes on email ALONE server-side. */
+  accountEmail?: string | null;
 }) {
   const t = useTheme();
   const { t: tr, isUrdu, locale } = useT();
@@ -484,6 +610,54 @@ function BookingRow({
               </Pressable>
             ) : null}
           </View>
+
+          {/* Pay is the action the customer WANTS; it leads. The amount is
+              not printed on the button — the sheet reads the transaction
+              ledger for the real figure, and a number taken from the booking
+              row could disagree with what the card is actually charged. */}
+          {mayOwe(booking) ? (
+            <View>
+              <View
+                style={{
+                  height: layout.hairline,
+                  backgroundColor: t.colors.border,
+                  marginBottom: t.spacing.md,
+                }}
+              />
+              <Button
+                label={tr('bookings.pay')}
+                icon="card-outline"
+                size="sm"
+                onPress={onPay}
+                urdu={isUrdu}
+              />
+            </View>
+          ) : null}
+
+          {/* Moving a date is a real alternative to cancelling, and it sits
+              ABOVE cancel for that reason — a couple whose plans changed
+              should see "change the date" before "lose your deposit". */}
+          {canReschedule(booking, accountEmail) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tr('bookings.reschedule')}
+              onPress={onReschedule}
+              hitSlop={8}
+              style={({ pressed }) => ({
+                flexDirection: isUrdu ? 'row-reverse' : 'row',
+                alignItems: 'center',
+                gap: 6,
+                alignSelf: isUrdu ? 'flex-end' : 'flex-start',
+                paddingVertical: t.spacing.sm,
+                opacity: pressed ? 0.55 : 1,
+              })}
+            >
+              <Ionicons name="calendar-outline" size={16} color={t.colors.textPrimary} />
+              <Text variant="label" tone="primary" urdu={isUrdu}>
+                {tr('bookings.reschedule')}
+              </Text>
+            </Pressable>
+          ) : null}
 
           {/*
             The one action this screen has ever offered.
