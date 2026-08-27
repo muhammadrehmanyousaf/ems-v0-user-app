@@ -493,6 +493,69 @@ export const STRINGS = {
   'bookings.cancelDone': { en: 'Booking cancelled', ur: 'بکنگ منسوخ ہو گئی' },
   'bookings.cancelFailed': { en: 'Couldn’t cancel the booking. Try again.', ur: 'بکنگ منسوخ نہیں ہو سکی۔ دوبارہ کوشش کریں۔' },
 
+  // ── Paying ──────────────────────────────────────────────────────────────
+  'bookings.pay': { en: 'Pay now', ur: 'ابھی ادائیگی کریں' },
+  'bookings.payTitle': { en: 'Pay for this booking', ur: 'اس بکنگ کی ادائیگی' },
+  'bookings.payChecking': { en: 'Checking what you owe…', ur: 'واجب رقم دیکھی جا رہی ہے…' },
+  'bookings.payTotal': { en: 'Booking total', ur: 'بکنگ کی کل رقم' },
+  'bookings.payAlready': { en: 'Already paid', ur: 'پہلے ادا شدہ' },
+  'bookings.payDue': { en: 'Due now', ur: 'ابھی واجب' },
+  'bookings.payDeposit': { en: 'Advance to confirm', ur: 'تصدیق کے لیے پیشگی' },
+  'bookings.payRemaining': { en: 'Remaining balance', ur: 'باقی رقم' },
+  'bookings.payFull': { en: 'Full amount', ur: 'مکمل رقم' },
+  'bookings.payCard': { en: 'Pay by card', ur: 'کارڈ سے ادائیگی' },
+  'bookings.payOpensBrowser': {
+    en: 'This opens Stripe’s secure page. Your card details never reach this app.',
+    ur: 'یہ Stripe کا محفوظ صفحہ کھولے گا۔ آپ کے کارڈ کی تفصیلات اس ایپ تک نہیں پہنچتیں۔',
+  },
+  'bookings.paySettled': { en: 'This booking is fully paid. Nothing is owed.', ur: 'یہ بکنگ مکمل ادا شدہ ہے۔ کچھ واجب نہیں۔' },
+  // The account may not pay: the booking reached the list by phone match, but
+  // the payment endpoints authorize on user id or email only.
+  'bookings.payNotYours': {
+    en: 'This booking is registered under a different email address, so it can’t be paid from this account. Your vendor can send you a payment link.',
+    ur: 'یہ بکنگ کسی اور ای میل پر رجسٹرڈ ہے، اس لیے اس اکاؤنٹ سے ادائیگی نہیں ہو سکتی۔ آپ کا وینڈر ادائیگی کا لنک بھیج سکتا ہے۔',
+  },
+  // Above Stripe's PKR ceiling.
+  'bookings.payBankTransfer': {
+    en: 'This amount is above the card limit. Your vendor will share bank transfer details.',
+    ur: 'یہ رقم کارڈ کی حد سے زیادہ ہے۔ آپ کا وینڈر بینک ٹرانسفر کی تفصیلات بھیجے گا۔',
+  },
+  'bookings.payDone': { en: 'Payment received', ur: 'ادائیگی موصول ہو گئی' },
+  'bookings.payAlreadyDone': { en: 'This payment was already recorded', ur: 'یہ ادائیگی پہلے ہی درج ہو چکی ہے' },
+  // Came back without completing. Deliberately not an error.
+  'bookings.payNotCompleted': {
+    en: 'No payment was taken. You can try again whenever you’re ready.',
+    ur: 'کوئی ادائیگی نہیں ہوئی۔ آپ جب چاہیں دوبارہ کوشش کر سکتے ہیں۔',
+  },
+  // We could not reach the server to confirm. Must not read as failure.
+  'bookings.payUnconfirmed': {
+    en: 'We couldn’t confirm your payment just now. If it went through it will appear here shortly — please don’t pay twice.',
+    ur: 'ہم ابھی آپ کی ادائیگی کی تصدیق نہیں کر سکے۔ اگر ادائیگی ہو گئی ہے تو جلد یہاں نظر آ جائے گی — براہِ کرم دوبارہ ادائیگی نہ کریں۔',
+  },
+  'bookings.payFailed': { en: 'Couldn’t start the payment. Try again.', ur: 'ادائیگی شروع نہیں ہو سکی۔ دوبارہ کوشش کریں۔' },
+
+  // ── Rescheduling ────────────────────────────────────────────────────────
+  'bookings.reschedule': { en: 'Change date', ur: 'تاریخ تبدیل کریں' },
+  'bookings.rescheduleTitle': { en: 'Move this booking', ur: 'بکنگ کی تاریخ بدلیں' },
+  'bookings.rescheduleCurrent': { en: 'Currently booked for', ur: 'موجودہ بکنگ' },
+  'bookings.rescheduleConfirm': { en: 'Move booking', ur: 'بکنگ منتقل کریں' },
+  'bookings.reschedulePickDate': { en: 'Pick a new date to see available times.', ur: 'دستیاب اوقات دیکھنے کے لیے نئی تاریخ منتخب کریں۔' },
+  'bookings.rescheduleNote': {
+    en: 'Your advance moves with the booking. If the new date costs less, the difference comes back to you.',
+    ur: 'آپ کی پیشگی رقم بکنگ کے ساتھ منتقل ہو جائے گی۔ اگر نئی تاریخ سستی ہوئی تو فرق واپس مل جائے گا۔',
+  },
+  'bookings.rescheduleDone': { en: 'Booking moved', ur: 'بکنگ منتقل ہو گئی' },
+  'bookings.rescheduleRefunded': { en: 'Booking moved — the difference is coming back to you', ur: 'بکنگ منتقل ہو گئی — فرق آپ کو واپس مل رہا ہے' },
+  // The new date prices HIGHER. Not a failure — a bill.
+  'bookings.rescheduleTopUpPre': { en: 'The new date costs', ur: 'نئی تاریخ' },
+  'bookings.rescheduleTopUpPost': { en: 'more. Pay the difference first, then move the booking.', ur: 'زیادہ مہنگی ہے۔ پہلے فرق ادا کریں، پھر بکنگ منتقل کریں۔' },
+  'bookings.rescheduleSlotTaken': { en: 'That time was just taken. Please pick another.', ur: 'وہ وقت ابھی بک ہو گیا۔ براہِ کرم دوسرا منتخب کریں۔' },
+  'bookings.rescheduleUnsupported': {
+    en: 'This vendor’s bookings can’t be moved from the app yet. Message them and they’ll do it for you.',
+    ur: 'اس وینڈر کی بکنگ ابھی ایپ سے منتقل نہیں ہو سکتی۔ اُنہیں پیغام بھیجیں، وہ کر دیں گے۔',
+  },
+  'bookings.rescheduleFailed': { en: 'Couldn’t move the booking. Try again.', ur: 'بکنگ منتقل نہیں ہو سکی۔ دوبارہ کوشش کریں۔' },
+
   // Guides
   'guides.title': { en: 'Wedding guides', ur: 'شادی گائیڈز' },
   'guides.subtitle': { en: 'Everything you need to plan your shaadi — from costs to rasms.', ur: 'اپنی شادی کی منصوبہ بندی کے لیے سب کچھ — اخراجات سے رسموں تک۔' },

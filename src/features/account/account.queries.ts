@@ -18,6 +18,7 @@ import {
   getRefundPreview,
   type CancelBookingInput,
 } from '@/lib/api/endpoints/bookingActions';
+import { getPayability } from '@/lib/api/endpoints/payments';
 import { useAuthStore } from '@/store/auth';
 
 export function useProfile() {
@@ -141,5 +142,27 @@ export function useCancelBooking() {
       qc.invalidateQueries({ queryKey: ['bookings'] });
       qc.invalidateQueries({ queryKey: ['refund-preview'] });
     },
+  });
+}
+
+// ── Paying for a booking ────────────────────────────────────────────────────
+
+/**
+ * The money position, fetched only while the pay sheet is open.
+ *
+ * Doubles as the authorization probe. `booking-status` runs byte-identical
+ * ownership logic to the pay endpoints and is read-only, so `null` here means
+ * "this account may not pay for this booking" — a real answer the sheet
+ * renders as an explanation rather than a button that can only 403.
+ */
+export function usePayability(bookingId: number | null) {
+  const authed = useAuthStore((s) => s.status === 'authenticated');
+  return useQuery({
+    queryKey: ['payability', bookingId],
+    queryFn: () => getPayability(bookingId as number),
+    enabled: authed && bookingId != null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
   });
 }

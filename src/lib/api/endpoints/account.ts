@@ -35,6 +35,7 @@ interface WireBookingDetail {
 
 interface WireBooking {
   id: number;
+  customerEmail?: string;
   bookingDate?: string;
   bookingTime?: string;
   status?: string;
@@ -64,6 +65,22 @@ export interface Booking {
   eventTime?: string;
   status?: string;
   paymentStatus?: string;
+  /**
+   * The address the BOOKING was made under — not necessarily the account's.
+   *
+   * `POST /payments/create-checkout-session` refuses unless the `customerEmail`
+   * in the body equals `booking.customerEmail`, so paying requires carrying
+   * this field rather than reading the auth store. On real production data the
+   * two disagree: this customer's account is `…yousaf7866@gmail.com` while
+   * bookings 7 and 19 are recorded against `qa.cust.fatima@example.com`.
+   * Sending the account address would 403 both.
+   *
+   * They disagree because the list and the payment endpoints do not share a
+   * definition of ownership — `getSimpleUserBookings` matches customerUserId
+   * OR email OR PHONE, and `callerMayPayForBooking` has no phone arm. See
+   * `getPayability` in endpoints/payments.ts.
+   */
+  customerEmail?: string;
   /** Numbers, coerced once, here. Never a DECIMAL string past this line. */
   totalAmount?: number;
   /** The advance. There is no `paidAmount` on this endpoint — `downPayment` is
@@ -94,6 +111,7 @@ function toBooking(w: WireBooking): Booking {
     eventTime: w.bookingTime,
     status: w.status,
     paymentStatus: w.paymentStatus,
+    customerEmail: w.customerEmail,
     totalAmount: num(w.totalAmount) ?? num(d?.totalAmount),
     downPayment: num(w.downPayment) ?? num(d?.downPayment),
     createdAt: w.createdAt,
